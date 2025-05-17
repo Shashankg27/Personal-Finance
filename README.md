@@ -8,3 +8,8 @@ This project is a personal finance management tool designed to help users track 
 - Record and categorize expenses
 - Monitor and manage investments
 - Generate financial summaries and reports
+
+## Tech Stack
+
+- MERN
+- TailwindCSS
