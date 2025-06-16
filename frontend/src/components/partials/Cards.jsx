@@ -10,4 +10,4 @@ const Cards = ({ title, discription, icon, color }) => {
   )
 }
 
-export default Cards
+export default Cards;
