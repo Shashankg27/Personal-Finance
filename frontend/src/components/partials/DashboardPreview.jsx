@@ -1,4 +1,25 @@
 import React from "react";
+import { PieChart, Pie, Cell, Legend, Tooltip, CartesianGrid, BarChart, Bar, XAxis, YAxis, ResponsiveContainer} from 'recharts';
+
+const data = [
+  { name: 'Food', value: 400 },
+  { name: 'Transportation', value: 300 },
+  { name: 'Entertainment', value: 300 },
+  { name: 'Utilities', value: 200 },
+  { name: 'Shopping', value: 250 },
+];
+const dataBar = [
+  { name: 'Mon', expenses: 120 },
+  { name: 'Tue', expenses: 180 },
+  { name: 'Wed', expenses: 290 },
+  { name: 'Thu', expenses: 490 },
+  { name: 'Fri', expenses: 180 },
+  { name: 'Sat', expenses: 290 },
+  { name: 'Sun', expenses: 450 }
+];
+
+
+const COLORS = ['#EF5350', '#FB8C00', '#FBC02D', '#4CAF50', '#42A5F5'];
 
 const DashboardPreview = () => {
   return (
@@ -41,45 +62,61 @@ const DashboardPreview = () => {
 
         {/* Charts Placeholder */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-[#1f2937] p-6 rounded-xl">
+          <div className="bg-[#374151] p-6 rounded-xl">
             <h3 className="text-xl font-semibold mb-4">Expense Categories</h3>
-            <div className="mt-6 grid grid-cols-2 gap-2 text-sm text-white">
-              {/* Lengends */}
-              <div className="flex items-center gap-2">
-                <i className="fas fa-circle text-red-500"></i> Food
-              </div>
-              <div className="flex items-center gap-2">
-                <i className="fas fa-circle text-yellow-400"></i> Entertainment
-              </div>
-              <div className="flex items-center gap-2">
-                <i className="fas fa-circle text-green-500"></i> Utilities
-              </div>
-              <div className="flex items-center gap-2">
-                <i className="fas fa-circle text-blue-500"></i> Shopping
-              </div>
-            </div>
-            <style>
-              {`
-      .clip-path-pie-1 { clip-path: polygon(50% 50%, 220% 0, 130% 100%); }
-      .clip-path-pie-2 { clip-path: polygon(50% 50%, 130% 100%, 0 100%); }
-      .clip-path-pie-3 { clip-path: polygon(50% 50%, 0 100%, 0 0); }
-      .clip-path-pie-4 { clip-path: polygon(50% 50%, 0 0, 211% 0); }
-    `}
-            </style>
-            {/* pie-chart */}
-            <div className="h-64 flex items-center justify-center">
-              <div className="relative w-40 h-40">
-                <i className="fas fa-circle text-red-500 absolute top-0 left-0 text-[10rem] clip-path-pie-1"></i>
-                <i className="fas fa-circle text-yellow-400 absolute top-0 left-0 text-[10rem] clip-path-pie-2"></i>
-                <i className="fas fa-circle text-green-500 absolute top-0 left-0 text-[10rem] clip-path-pie-3"></i>
-                <i className="fas fa-circle text-blue-500 absolute top-0 left-0 text-[10rem] clip-path-pie-4"></i>
-              </div>
+            <div className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="#fff"
+                    strokeWidth={2}
+                  >
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#333', border: 'none', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend
+                    layout="horizontal"
+                    verticalAlign="top"
+                    align="center"
+                    iconType="square"
+                    wrapperStyle={{ color: '#fff' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="bg-[#1f2937] p-6 rounded-xl">
+          <div className="bg-[#374151] p-6 rounded-xl">
             <h3 className="text-xl font-semibold mb-4">Weekly Expenses</h3>
-            <div className="h-64 flex items-center justify-center text-gray-400"></div>
+            <div style={{ width: '100%', height: 400, backgroundColor: '#374151', padding: '1rem', borderRadius: '10px' }}>
+              <ResponsiveContainer>
+                <BarChart data={dataBar}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#445" />
+                  <XAxis dataKey="name" stroke="#ccc" />
+                  <YAxis stroke="#ccc" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#333', border: 'none', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend
+                    wrapperStyle={{ color: '#fff' }}
+                    iconType="plainline"
+                  />
+                  <Bar dataKey="expenses" fill="#42A5F5" name="Daily Expenses" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>
