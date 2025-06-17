@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LandingNav from './partials/LandingNav';
 import Hero from './partials/Hero';
 import Features from './partials/Features';
@@ -8,14 +8,16 @@ import Promotion from './partials/Promotion';
 import Footer from './partials/Footer';
 
 const LandingPage = () => {
+    const [popUp, setPopUp] = useState(false);
+
     return (
         <div className=''>
             <LandingNav />
-            <Hero />
+            <Hero popUp={popUp} setPopUp={setPopUp}/>
             <Features />
             <DashboardPreview/>
-            <Pricing />
-            <Promotion />
+            <Pricing  popUp={popUp} setPopUp={setPopUp}/>
+            <Promotion  popUp={popUp} setPopUp={setPopUp}/>
             <Footer />
         </div>
     );

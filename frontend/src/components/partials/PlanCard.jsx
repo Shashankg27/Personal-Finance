@@ -1,6 +1,6 @@
 import React from 'react'
 
-const PlanCard = ( {type, price, features, cta, mp} ) => {
+const PlanCard = ( {type, price, features, cta, mp, popUp, setPopUp} ) => {
   return (
     <div className='relative'>
         {mp && <div className='absolute -top-4 left-1/2 -translate-x-1/2 bg-[#facc15] text-black text-sm font-semibold px-4 py-1 rounded-full shadow-md z-10'>
@@ -22,7 +22,8 @@ const PlanCard = ( {type, price, features, cta, mp} ) => {
                     ))}
                 </div>
             </div>
-            <button className={`mt-2 !rounded-lg py-2.75 !text-lg font-semibold ${mp ? "bg-white text-[#2563eb]" : "bg-[#4b5563] text-white"}`}>{cta}</button>
+            <button className={`mt-2 !rounded-lg py-2.75 !text-lg font-semibold ${mp ? "bg-white text-[#2563eb]" : "bg-[#4b5563] text-white"}`}
+            onClick={() => setPopUp(true)}>{cta}</button>
         </div>
     </div>
   )

@@ -35,7 +35,7 @@ const Features = () => {
         }
     ]
     return (
-        <div className='bg-[#1f2937] py-5 text-white flex flex-col items-center gap-4'>
+        <div className='bg-[#1f2937] py-5 text-white flex flex-col items-center gap-4' id="features">
             <p className='font-bold text-4xl text-center'>Powerful Features</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-6 w-[90%]">
                 {CardsData.map((card, index) => (

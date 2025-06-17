@@ -3,8 +3,8 @@ import React from 'react'
 const Footer = () => {
   return (
     <div>
-      <footer className="bg-[#1f2937] text-white px-6 py-10">
-        <div className="flex justify-evenly">
+      <footer className="bg-[#1f2937] text-white px-6 py-10" id='contact'>
+      <div className="flex justify-evenly flex-col md:flex-row items-center">
         <div>
           <div className="flex items-center gap-1">
             <i className="fa-solid fa-coins fa-xl" style={{ color: "#ffffff" }} />
@@ -45,7 +45,7 @@ const Footer = () => {
       <hr/>
 
       <div className="mt-10 flex flex-col items-center space-y-4">
-        <p className="text-xs text-gray-500">© 2024 FinanceTracker. All rights reserved.</p>
+        <p className="text-xs text-gray-500">© 2025 FinanceTracker. All rights reserved.</p>
         
       </div>
       
