@@ -16,7 +16,7 @@ const SignIn = () => {
             <label className='text-sm text-gray-100' htmlFor="username">Username</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <i className="fa-solid fa-user"></i>
+                <i className="fas fa-at"></i>
               </span>
               <input
                 className='bg-[#374151] pl-10 pr-3 py-1.5 rounded text-md w-full text-white'
@@ -36,10 +36,7 @@ const SignIn = () => {
               </span>
               <input
                 className='bg-[#374151] pl-10 pr-3 py-1.5 rounded text-md w-full text-white'
-                type="password"
-                name="password"
-                id="password"
-                placeholder='Enter your password'
+                type="password" name="password" id="password" placeholder='Enter your password'
               />
             </div>
           </div>
