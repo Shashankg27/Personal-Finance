@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { nanoid } = require('nanoid');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -14,14 +16,30 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    phone: {
-        type: String
+    username: {
+        type: String,
+        require: true,
+        unique: true
+    },
+    salt: {
+        type: String,
     },
     createdAt: {
         type: Date,
         default: Date.now
     }
 });
+
+userSchema.pre('save', async function(next){
+    if(!this.isModified('password')) next();
+
+    const salt = await bcrypt.genSalt(10);
+    hashedPassword = await bcrypt.hash(this.password, salt);
+    this.salt = salt;
+    this.password = hashedPassword;
+    
+    next();
+})
 
 const User = mongoose.model('User', userSchema);
 

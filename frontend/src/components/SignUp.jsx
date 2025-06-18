@@ -14,7 +14,7 @@ const SignUp = () => {
           <p className="text-md text-gray-400">Start your financial journey</p>
         </div>
 
-        <form className="flex flex-col gap-3 w-full">
+        <form className="flex flex-col gap-3 w-full" method='post' action={`${import.meta.env.VITE_BACKEND_API}/user/signup`}>
           <div className="flex gap-3">
             <div className="w-1/2">
               <label htmlFor="firstName" className="text-sm text-gray-100">First Name</label>
@@ -25,6 +25,7 @@ const SignUp = () => {
                 <input
                   type="text"
                   id="firstName"
+                  name='fname'
                   placeholder="First name"
                   className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
                 />
@@ -39,6 +40,7 @@ const SignUp = () => {
                 <input
                   type="text"
                   id="lastName"
+                  name='lname'
                   placeholder="Last name"
                   className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
                 />
@@ -55,6 +57,7 @@ const SignUp = () => {
               <input
                 type="email"
                 id="email"
+                name='email'
                 placeholder="Enter your email"
                 className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
               />
@@ -70,6 +73,7 @@ const SignUp = () => {
               <input
                 type="text"
                 id="username"
+                name='username'
                 placeholder="Choose a username"
                 className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
               />
@@ -85,6 +89,7 @@ const SignUp = () => {
               <input
                 type="password"
                 id="password"
+                name='password'
                 placeholder="Create a password"
                 className="bg-[#374151] pl-10 pr-10 py-2 rounded text-sm w-full text-white"
               />
