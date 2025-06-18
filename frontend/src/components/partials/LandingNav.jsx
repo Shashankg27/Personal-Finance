@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 
 const LandingNav = () => {
     return (
@@ -19,9 +20,9 @@ const LandingNav = () => {
                         <a href="#about" className="!no-underline !text-[#d1d5db]">About</a>
                         <a href="#contact" className="!no-underline !text-[#d1d5db]">Contact</a>
                     </div>
-                    <div className='flex gap-3'>
-                        <button className='!text-[#d1d5db]'>Sign In</button>
-                        <button className='text-white py-1 px-3 rounded bg-[#2563eb]'>Get Started</button>
+                    <div className='flex gap-3 items-center'>
+                        <Link className='!text-[#d1d5db] !no-underline' to='/signin'>Sign In</Link>
+                        <Link className='text-white py-1 px-3 rounded bg-[#2563eb] !no-underline' to='signup'>Get Started</Link>
                     </div>
                 </div>
             </div>
