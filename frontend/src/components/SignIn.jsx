@@ -1,7 +1,29 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 const SignIn = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await axios.post('http://localhost:3000/user/signin', data, {
+        withCredentials: true,
+      });
+      const result = response.data;
+      if (result.success) {
+        window.location.href = '/home';
+      }
+    } catch (error) {
+      console.error('Error signing in:', error);
+    }
+  };
+
   return (
     <div className='h-screen bg-[#111827] flex justify-center items-center'>
       <div className='bg-[#1f2937] text-white flex flex-col items-center justify-center gap-2 h-min p-8 rounded-xl w-full max-w-md'>
@@ -11,7 +33,7 @@ const SignIn = () => {
         </div>
         <p className='font-bold text-xl m-0'>Welcome Back</p>
         <p className='text-md text-gray-400 text-semibold'>SignIn to your account</p>
-        <form action="" className='flex flex-col gap-3 w-full'>
+        <form onSubmit={handleSubmit} className='flex flex-col gap-3 w-full'>
           <div>
             <label className='text-sm text-gray-100' htmlFor="username">Username</label>
             <div className="relative">
@@ -24,6 +46,8 @@ const SignIn = () => {
                 name="username"
                 id="username"
                 placeholder='Enter your username'
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
           </div>
@@ -36,7 +60,12 @@ const SignIn = () => {
               </span>
               <input
                 className='bg-[#374151] pl-10 pr-3 py-1.5 rounded text-md w-full text-white'
-                type="password" name="password" id="password" placeholder='Enter your password'
+                type="password"
+                name="password"
+                id="password"
+                placeholder='Enter your password'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           </div>

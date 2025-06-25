@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { createToken } = require('../services/authentication');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -29,16 +30,31 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-userSchema.pre('save', async function(next){
-    if(!this.isModified('password')) next();
+userSchema.pre('save', async function(next) {
+    if(!this.isModified('password')) return next();  // <-- add return
 
-    const salt = await bcrypt.genSalt(10);
-    hashedPassword = await bcrypt.hash(this.password, salt);
-    this.salt = salt;
-    this.password = hashedPassword;
+    try{
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(this.password, salt);
+        this.salt = salt;
+        this.password = hashedPassword;
+        next();
+    }
+    catch(err){
+        next(err);
+    }
+});
+
+userSchema.static("checkPasswordAndCreateToken", async function(username, password){
+    const user = await this.findOne({ username });
+    if(!user) throw new Error("User not found!");
+    const hashedPass = await bcrypt.hash(password, user.salt);
+
+    if(hashedPass !== user.password) throw new Error("Incorrect Password");
     
-    next();
-})
+    const token = createToken(user);
+    return token;
+});
 
 const User = mongoose.model('User', userSchema);
 

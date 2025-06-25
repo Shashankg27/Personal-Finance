@@ -1,7 +1,51 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios';
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fname: '',
+    lname: '',
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [agreed, setAgreed] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if(formData.password !== formData.confirmPassword){
+      alert("Passwords do not match!");
+      return;
+    }
+
+    try{
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_API}/user/signup`, {
+        fname: formData.fname,
+        lname: formData.lname,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password
+      }, {
+        withCredentials: true
+      });
+
+      if(response.data.success){
+        navigate('/signin');
+      }
+      else{
+        alert(response.data.message || "Signup failed");
+      }
+    }
+    catch(err){
+      console.log("Signup error: " + err);
+      alert("Signup failed! Please try again.")
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#111827] text-white p-4">
       <div className="bg-[#1f2937] p-8 rounded-xl shadow-md w-full max-w-md">
@@ -14,7 +58,7 @@ const SignUp = () => {
           <p className="text-md text-gray-400">Start your financial journey</p>
         </div>
 
-        <form className="flex flex-col gap-3 w-full" method='post' action={`${import.meta.env.VITE_BACKEND_API}/user/signup`}>
+        <form className="flex flex-col gap-3 w-full" onSubmit={handleSubmit}>
           <div className="flex gap-3">
             <div className="w-1/2">
               <label htmlFor="firstName" className="text-sm text-gray-100">First Name</label>
@@ -26,6 +70,8 @@ const SignUp = () => {
                   type="text"
                   id="firstName"
                   name='fname'
+                  value={formData.fname}
+                  onChange={(e) => setFormData({ ...formData, fname: e.target.value })}
                   placeholder="First name"
                   className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
                 />
@@ -41,6 +87,8 @@ const SignUp = () => {
                   type="text"
                   id="lastName"
                   name='lname'
+                  value={formData.lname}
+                  onChange={(e) => setFormData({ ...formData, lname: e.target.value })}
                   placeholder="Last name"
                   className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
                 />
@@ -58,6 +106,8 @@ const SignUp = () => {
                 type="email"
                 id="email"
                 name='email'
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="Enter your email"
                 className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
               />
@@ -74,6 +124,8 @@ const SignUp = () => {
                 type="text"
                 id="username"
                 name='username'
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 placeholder="Choose a username"
                 className="bg-[#374151] pl-10 pr-3 py-2 rounded text-sm w-full text-white"
               />
@@ -90,6 +142,8 @@ const SignUp = () => {
                 type="password"
                 id="password"
                 name='password'
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Create a password"
                 className="bg-[#374151] pl-10 pr-10 py-2 rounded text-sm w-full text-white"
               />
@@ -108,6 +162,8 @@ const SignUp = () => {
               <input
                 type="password"
                 id="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 placeholder="Confirm your password"
                 className="bg-[#374151] pl-10 pr-10 py-2 rounded text-sm w-full text-white"
               />
@@ -128,7 +184,7 @@ const SignUp = () => {
           </div>
 
           <div className="flex items-center text-center gap-1 text-sm text-gray-400">
-            <input type="checkbox" id="terms" />
+            <input type="checkbox" id="terms" onChange={(e) => setAgreed(e.target.checked)}/>
             <label htmlFor="terms">
               I agree to the <a href="#" className="text-blue-400 underline">Terms of Service</a> and <a href="#" className="text-blue-400 underline">Privacy Policy</a>
             </label>
@@ -137,6 +193,7 @@ const SignUp = () => {
           <input
             type="submit"
             value="Create Account"
+            disabled={!agreed}
             className="bg-[#2563eb] py-2 rounded text-sm font-semibold w-full mt-2"
           />
         </form>
