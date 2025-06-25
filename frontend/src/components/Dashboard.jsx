@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import SideBar from './partials/SideBar';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -23,9 +24,14 @@ const Dashboard = () => {
     if (!user) return <div>Loading...</div>;
 
     return (
-        <div>
-            <p>Welcome</p>
-            <p>{user.name}</p>
+        <div className='flex gap-5'>
+            <div>
+                <SideBar focus='Dashboard'/>
+            </div>
+            <div>
+                <p>Welcome</p>
+                <p>{user.name}</p>
+            </div>
         </div>
     );
 }
