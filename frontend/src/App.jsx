@@ -5,6 +5,7 @@ import SignIn from './components/SignIn'
 import SignUp from './components/SignUp'
 import Dashboard from './components/Dashboard'
 import Categories from './components/Categories'
+import AddCategory from './components/partials/AddCategory'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/home" element={<Dashboard />} />
       <Route path="/categories" element={<Categories />} />
+      <Route path="/categories/addCategories" element={<AddCategory />} />
     </Routes>
   )
 }
