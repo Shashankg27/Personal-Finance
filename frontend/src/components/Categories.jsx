@@ -1,28 +1,50 @@
-import React from "react";
+import React, { useEffect, useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import SideBar from './partials/SideBar';
 
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
 const Categories = () => {
+  const [user, setUser] = useState(null);
+  
+      useEffect(() => {
+          const token = getCookie('token');
+          console.log(token);
+          if(token){
+            const userData = jwtDecode(token);
+            setUser(userData);
+            console.log(userData);
+          }
+      }, []);
   return (
     <div>
-      <div className="bg-[#0f172a] min-h-screen text-white p-6 md:ml-64">
+      <div>
+        <SideBar focus='categories'/>
+      </div>
+      <div>
+      <div className="bg-[#0f172a] min-h-screen text-white md:ml-64">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6">
           <h1 className="text-2xl font-semibold">Categories</h1>
           <div className="flex items-center gap-4">
             <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
               + Add Category
             </button>
             <div className="flex items-center gap-2">
-              <img
+              {/* <img
                 src="https://randomuser.me/api/portraits/women/45.jpg"
                 alt="John Doe"
                 className="w-8 h-8 rounded-full"
-              />
-              <span className="text-sm">John Doe</span>
+              /> */}
+              <span className="text-sm">{user.name}</span>
             </div>
           </div>
         </div>
 
-        {/* Cards Section (Moved inside main container) */}
+        {/* Cards Section*/}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-[#1e293b] rounded-lg p-4">
             <p className="text-sm text-gray-400 flex items-center gap-2">
@@ -67,6 +89,8 @@ const Categories = () => {
         </div>
       </div>
     </div>
+    </div>
+    
   );
 };
 
