@@ -8,87 +8,90 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 const Categories = () => {
-  const [user, setUser] = useState(null);
+//   const [user, setUser] = useState(null);
+  let user = null;
   
-      useEffect(() => {
+    //   useEffect(() => {
           const token = getCookie('token');
           console.log(token);
           if(token){
             const userData = jwtDecode(token);
-            setUser(userData);
+            // setUser(userData);
             console.log(userData);
+            user = userData;
           }
-      }, []);
+          console.log(user);
+    //   }, []);
   return (
-    <div>
+    <div className='flex'>
       <div>
         <SideBar focus='categories'/>
       </div>
-      <div>
-      <div className="bg-[#0f172a] min-h-screen text-white md:ml-64">
-        {/* Header */}
-        <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6">
-          <h1 className="text-2xl font-semibold">Categories</h1>
-          <div className="flex items-center gap-4">
-            <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
-              + Add Category
-            </button>
-            <div className="flex items-center gap-2">
-              {/* <img
-                src="https://randomuser.me/api/portraits/women/45.jpg"
-                alt="John Doe"
-                className="w-8 h-8 rounded-full"
-              /> */}
-              <span className="text-sm">{user.name}</span>
+      <div className='flex-1'>
+        <div className="bg-[#0f172a] min-h-screen text-white">
+            {/* Header */}
+            <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
+            <h1 className="text-2xl font-semibold">Categories</h1>
+            <div className="flex items-center gap-4">
+                <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md">
+                + Add Category
+                </button>
+                <div className="flex items-center gap-2">
+                {/* <img
+                    src="https://randomuser.me/api/portraits/women/45.jpg"
+                    alt="John Doe"
+                    className="w-8 h-8 rounded-full"
+                /> */}
+                <span className="text-sm">{user.name}</span>
+                </div>
             </div>
-          </div>
+            </div>
+
+            {/* Cards Section*/}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
+            <div className="bg-[#1e293b] rounded-lg p-4">
+                <p className="text-sm text-gray-400 flex items-center gap-2">
+                Total Categories <i className="fas fa-tags" />
+                </p>
+                <p className="text-2xl text-blue-400 font-bold mt-1">{user.incomeCategories.length + user.expenseCategories.length + user.investmentCategories.length}</p>
+                <p className="text-sm text-gray-400">Active categories</p>
+            </div>
+
+            <div className="bg-[#1e293b] rounded-lg p-4">
+                <p className="text-sm text-gray-400 flex items-center gap-2">
+                Income Categories
+                <i
+                    className="fa-solid fa-arrow-up"
+                    style={{ color: "#4ade80" }}
+                />
+                </p>
+                <p className="text-2xl font-bold text-green-400 mt-1">{user.incomeCategories.length}</p>
+                <p className="text-sm text-gray-400">Income sources</p>
+            </div>
+
+            <div className="bg-[#1e293b] rounded-lg p-4">
+                <p className="text-sm text-gray-400 flex items-center gap-2">
+                Expense Categories
+                <i
+                    className="fa-solid fa-arrow-down"
+                    style={{ color: "#f87171" }}
+                />
+                </p>
+                <p className="text-2xl font-bold text-red-400 mt-1">{user.expenseCategories.length}</p>
+                <p className="text-sm text-gray-400">Expense types</p>
+            </div>
+
+            <div className="bg-[#1e293b] rounded-lg p-4">
+                <p className="text-sm text-gray-400 flex items-center gap-2">
+                Investment Types
+                <i className="fas fa-chart-line text-purple-400" />
+                </p>
+                <p className="text-2xl font-bold text-purple-400 mt-1">{user.investmentCategories.length}</p>
+                <p className="text-sm text-gray-400">Investment categories</p>
+            </div>
+            </div>
         </div>
-
-        {/* Cards Section*/}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-[#1e293b] rounded-lg p-4">
-            <p className="text-sm text-gray-400 flex items-center gap-2">
-              Total Categories <i className="fas fa-tags" />
-            </p>
-            <p className="text-2xl text-blue-400 font-bold mt-1">24</p>
-            <p className="text-sm text-gray-400">Active categories</p>
-          </div>
-
-          <div className="bg-[#1e293b] rounded-lg p-4">
-            <p className="text-sm text-gray-400 flex items-center gap-2">
-              Income Categories
-              <i
-                className="fa-solid fa-arrow-up"
-                style={{ color: "#4ade80" }}
-              />
-            </p>
-            <p className="text-2xl font-bold text-green-400 mt-1">8</p>
-            <p className="text-sm text-gray-400">Income sources</p>
-          </div>
-
-          <div className="bg-[#1e293b] rounded-lg p-4">
-            <p className="text-sm text-gray-400 flex items-center gap-2">
-              Expense Categories
-              <i
-                className="fa-solid fa-arrow-down"
-                style={{ color: "#f87171" }}
-              />
-            </p>
-            <p className="text-2xl font-bold text-red-400 mt-1">14</p>
-            <p className="text-sm text-gray-400">Expense types</p>
-          </div>
-
-          <div className="bg-[#1e293b] rounded-lg p-4">
-            <p className="text-sm text-gray-400 flex items-center gap-2">
-              Investment Types
-              <i className="fas fa-chart-line text-purple-400" />
-            </p>
-            <p className="text-2xl font-bold text-purple-400 mt-1">2</p>
-            <p className="text-sm text-gray-400">Investment categories</p>
-          </div>
         </div>
-      </div>
-    </div>
     </div>
     
   );

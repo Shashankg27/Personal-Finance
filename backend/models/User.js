@@ -21,6 +21,18 @@ const userSchema = new mongoose.Schema({
         require: true,
         unique: true
     },
+    incomeCategories: {
+        type: Array,
+        default: []
+    },
+    expenseCategories: {
+        type: Array,
+        default: []
+    },
+    investmentCategories: {
+        type: Array,
+        default: []
+    },
     salt: {
         type: String,
     },

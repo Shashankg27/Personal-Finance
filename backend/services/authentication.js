@@ -7,7 +7,10 @@ function createToken(user){
         _id: user._id,
         name: user.name,
         email: user.email,
-        username: user.username
+        username: user.username,
+        incomeCategories: user.incomeCategories,
+        expenseCategories: user.expenseCategories,
+        investmentCategories: user.incomeCategories
     };
 
     const token = JWT.sign(payload, secret);
