@@ -1,42 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from 'axios';
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const AddCategory = ( { value } ) => {
+const AddCategory = () => {
   const navigate = useNavigate();
-    const [categoryData, setCategoryData] = useState({
-        type: value,
-        name: "",
-        note: "",
-        budget: 0
-    });
+  const location = useLocation();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  // Default to "" or get from state
+  const defaultType = location.state?.value || "";
 
-        if(categoryData.budget <= 0){
-            alert("Budget should be a positive integer!");
-            return;
-        }
+  const [categoryData, setCategoryData] = useState({
+    type: defaultType,
+    name: "",
+    note: "",
+    budget: 0
+  });
 
-        try{
-            const response = await axios.patch(`${import.meta.env.VITE_BACKEND_API}/user/addCategory`, {
-                categoryData: {...categoryData}
-            }, {
-                withCredentials: true
-            });
-            if(response.data.success){
-                navigate('/categories');
-            }
-            else{
-                alert("Failed! Try to add category again.");
-            }
-        }
-        catch(err){
-            console.log("Add category error: " + err);
-            alert('Failed!');
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (categoryData.budget <= 0) {
+      alert("Budget should be a positive integer!");
+      return;
     }
+
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_BACKEND_API}/user/addCategory`, {
+        categoryData: { ...categoryData }
+      }, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+        navigate('/categories');
+      } else {
+        alert("Failed! Try to add category again.");
+      }
+    } catch (err) {
+      console.log("Add category error: " + err);
+      alert('Failed!');
+    }
+  }
+
   return (
     <div>
       <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
@@ -54,7 +58,7 @@ const AddCategory = ( { value } ) => {
             {/* Type Dropdown */}
             <div>
               <label className="block text-gray-300 mb-1">Type</label>
-              <select name='type' value={value} onChange={(e) => setCategoryData({...categoryData, type: e.target.value})} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select name='type' value={categoryData.type} onChange={(e) => setCategoryData({ ...categoryData, type: e.target.value })} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select Type</option>
                 <option value="incomeCategories">Income</option>
                 <option value="expenseCategories">Expense</option>
@@ -69,7 +73,7 @@ const AddCategory = ( { value } ) => {
                 type="text"
                 name='categoryName'
                 value={categoryData.name}
-                onChange={(e) => setCategoryData({...categoryData, name: e.target.value})}
+                onChange={(e) => setCategoryData({ ...categoryData, name: e.target.value })}
                 placeholder="Enter category name"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -82,7 +86,7 @@ const AddCategory = ( { value } ) => {
                 type="text"
                 name='note'
                 value={categoryData.note}
-                onChange={(e) => setCategoryData({...categoryData, note: e.target.value})}
+                onChange={(e) => setCategoryData({ ...categoryData, note: e.target.value })}
                 placeholder="Add a note"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -95,7 +99,7 @@ const AddCategory = ( { value } ) => {
                 type="number"
                 name='budget'
                 value={categoryData.budget}
-                onChange={(e) => setCategoryData({...categoryData, budget: e.target.value})}
+                onChange={(e) => setCategoryData({ ...categoryData, budget: e.target.value })}
                 placeholder="Enter budget amount"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

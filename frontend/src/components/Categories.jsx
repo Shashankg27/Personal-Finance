@@ -97,8 +97,8 @@ const Categories = () => {
                 </div>
                 <div className='flex flex-col gap-2 bg-[#1e293b] p-4 rounded-lg'>
                     <p className='m-0 font-bold'>Quick Actions</p>
-                    <Link to='addCategory' className='text-white !no-underline bg-green-600 py-1 px-5 text-sm rounded-lg'>+ Add Income Category</Link>
-                    <Link to='addCategory' className='text-white !no-underline bg-red-600 py-1 px-5 text-sm rounded-lg'>+ Add Expense Category</Link>
+                    <Link to='addCategory' state={{ value: "incomeCategories" }} className='text-white !no-underline bg-green-600 py-1 px-5 text-sm rounded-lg'>+ Add Income Category</Link>
+                    <Link to='addCategory' state={{ value: "expenseCategories" }} className='text-white !no-underline bg-red-600 py-1 px-5 text-sm rounded-lg'>+ Add Expense Category</Link>
                 </div>
             </div>
           </div>
