@@ -34,7 +34,7 @@ const Categories = () => {
             <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
             <h1 className="text-2xl font-semibold">Categories</h1>
                 <div className="flex items-center gap-4">
-                    <Link to='/addCategory' className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
+                    <Link to='/categories/addCategory' className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
                     + Add Category
                     </Link>
                     <div className="flex items-center gap-2">

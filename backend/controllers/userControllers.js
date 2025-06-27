@@ -1,4 +1,7 @@
-const User = require("../models/User")
+const User = require("../models/User");
+const jwt = require('jsonwebtoken');
+const { createToken, validateToken } = require("../services/authentication");
+const SECRET = process.env.JWT_SECRET;
 
 const handleSignUp = async (req, res) => {
     console.log(req.body);
@@ -34,4 +37,43 @@ const handleSignIn = async (req, res) => {
     }
 }
 
-module.exports = { handleSignUp, handleSignIn }
+const handleAddCategory = async (req, res) => {
+    const { categoryData } = req.body;
+
+    try{
+        const prevToken = req.cookies.token;
+        const prevUser = validateToken(prevToken);
+        const type = categoryData.type;
+        const user = await User.findOne({ username: prevUser.username });
+        if(!user){
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        const categoryExists = user[type].some(
+            (cat) => cat.name.toLowerCase() === categoryData.name.toLowerCase()
+        );
+        if(categoryExists){
+            return res.status(409).json({ success: false, message: "Category already exists" });
+        }
+
+        user[type].push(categoryData);
+        await user.save();
+        
+        const token = createToken(user);
+
+        console.log(token);
+        console.log(validateToken(token));
+
+        return res.cookie("token", token, {
+            httpOnly: false,
+            secure: true,
+            sameSite: "none",
+        }).json({ success: true, message: "Category added successfully"});
+    }
+    catch(error){
+        console.error("Error adding category:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+}
+
+module.exports = { handleSignUp, handleSignIn, handleAddCategory }

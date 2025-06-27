@@ -1,6 +1,42 @@
-import React from "react";
+import React, { useState } from "react";
+import axios from 'axios';
+import { Navigate, useNavigate } from "react-router-dom";
 
-const AddCategory = () => {
+const AddCategory = ( { value } ) => {
+  const navigate = useNavigate();
+    const [categoryData, setCategoryData] = useState({
+        type: value,
+        name: "",
+        note: "",
+        budget: 0
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if(categoryData.budget <= 0){
+            alert("Budget should be a positive integer!");
+            return;
+        }
+
+        try{
+            const response = await axios.patch(`${import.meta.env.VITE_BACKEND_API}/user/addCategory`, {
+                categoryData: {...categoryData}
+            }, {
+                withCredentials: true
+            });
+            if(response.data.success){
+                navigate('/categories');
+            }
+            else{
+                alert("Failed! Try to add category again.");
+            }
+        }
+        catch(err){
+            console.log("Add category error: " + err);
+            alert('Failed!');
+        }
+    }
   return (
     <div>
       <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
@@ -14,15 +50,15 @@ const AddCategory = () => {
 
           <p className="text-gray-300 text-center mb-6">Add a New Category</p>
 
-          <form className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Type Dropdown */}
             <div>
               <label className="block text-gray-300 mb-1">Type</label>
-              <select className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <select name='type' value={value} onChange={(e) => setCategoryData({...categoryData, type: e.target.value})} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select Type</option>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-                <option value="investment">Investment</option>
+                <option value="incomeCategories">Income</option>
+                <option value="expenseCategories">Expense</option>
+                <option value="investmentCategories">Investment</option>
               </select>
             </div>
 
@@ -31,6 +67,9 @@ const AddCategory = () => {
               <label className="block text-gray-300 mb-1">Category Name</label>
               <input
                 type="text"
+                name='categoryName'
+                value={categoryData.name}
+                onChange={(e) => setCategoryData({...categoryData, name: e.target.value})}
                 placeholder="Enter category name"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -41,6 +80,9 @@ const AddCategory = () => {
               <label className="block text-gray-300 mb-1">Note</label>
               <input
                 type="text"
+                name='note'
+                value={categoryData.note}
+                onChange={(e) => setCategoryData({...categoryData, note: e.target.value})}
                 placeholder="Add a note"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -51,6 +93,9 @@ const AddCategory = () => {
               <label className="block text-gray-300 mb-1">Budget</label>
               <input
                 type="number"
+                name='budget'
+                value={categoryData.budget}
+                onChange={(e) => setCategoryData({...categoryData, budget: e.target.value})}
                 placeholder="Enter budget amount"
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
