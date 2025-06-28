@@ -8,6 +8,12 @@ import Categories from './components/Categories'
 import AddCategory from './components/partials/AddCategory'
 import Settings from './components/Settings'
 import Investments from './components/Investments'
+import Transactions from './components/Transactions'
+import Income from './components/Income'
+import Loan from './components/Loan'
+import Goals from './components/Goals'
+import Reports from './components/Reports'
+
 
 function App() {
   return (
@@ -21,7 +27,7 @@ function App() {
       <Route path="/investments" element={<Investments />} />
       <Route path="/transactions" element={<Transactions />} />
       <Route path="/incomeBudget" element={<Income />} />
-      <Route path="/loans" element={<Loans />} />
+      <Route path="/loans" element={<Loan />} />
       <Route path="/goals" element={<Goals />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/categories/addCategory" element={<AddCategory />} />

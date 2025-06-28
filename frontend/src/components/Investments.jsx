@@ -31,7 +31,7 @@ const Investments = () => {
         </div>
         <div className='flex-1 bg-[#111827]'>
             <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700 text-white">
-                <h1 className="text-2xl font-semibold">Investments & Savings</h1>
+                <h3 className="text-2xl font-semibold">Investments & Savings</h3>
                 <div className="flex items-center gap-4">
                     <Link to='/categories/addCategory' className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
                     + Add Category
