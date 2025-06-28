@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import Categories from './components/Categories'
 import AddCategory from './components/partials/AddCategory'
 import Settings from './components/Settings'
+import Investments from './components/Investments'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
       <Route path="/home" element={<Dashboard />} />
       <Route path="/categories" element={<Categories />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/investments" element={<Investments />} />
       <Route path="/categories/addCategory" element={<AddCategory />} />
     </Routes>
   )
