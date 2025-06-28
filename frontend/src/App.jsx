@@ -19,6 +19,11 @@ function App() {
       <Route path="/categories" element={<Categories />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/investments" element={<Investments />} />
+      <Route path="/transactions" element={<Transactions />} />
+      <Route path="/incomeBudget" element={<Income />} />
+      <Route path="/loans" element={<Loans />} />
+      <Route path="/goals" element={<Goals />} />
+      <Route path="/reports" element={<Reports />} />
       <Route path="/categories/addCategory" element={<AddCategory />} />
     </Routes>
   )

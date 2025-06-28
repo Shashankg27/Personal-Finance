@@ -241,7 +241,7 @@ const Settings = () => {
               </div>
 
               {/* Danger Zone */}
-              <div className="bg-[#1f2937] p-4 rounded-xl border border-red-600">
+              <div className="bg-[#271925] p-4 rounded-xl border !border-red-600">
                 <h3 className="text-md font-semibold text-red-500 mb-3">
                   Danger Zone
                 </h3>

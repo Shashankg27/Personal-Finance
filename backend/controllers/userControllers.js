@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const jwt = require('jsonwebtoken');
 const { createToken, validateToken } = require("../services/authentication");
+const Investments = require("../models/Investment");
 const SECRET = process.env.JWT_SECRET;
 
 const handleSignUp = async (req, res) => {
@@ -34,6 +35,27 @@ const handleSignIn = async (req, res) => {
     }
     catch(err){
         return res.status(401).json({ error: "Invalid username or password" });
+    }
+}
+
+const handleAddInvestment = async (req, res) => {
+    try{
+        const token = req.cookies.token;
+        const user = validateToken(token);
+        await Investments.create({
+            name: req.body.name,
+            note: req.body.note,
+            date: req.body?.date,
+            principal: req.body.principal,
+            ROI: req.body.ROI,
+            category: req.body.category,
+            userId: user._id
+        });
+
+        return res.status(201).json({ success: "Investment created Successfully" });
+    }
+    catch(err){
+        return res.status(500).json({ message: err.message });
     }
 }
 
@@ -76,4 +98,4 @@ const handleAddCategory = async (req, res) => {
     }
 }
 
-module.exports = { handleSignUp, handleSignIn, handleAddCategory }
+module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment }
