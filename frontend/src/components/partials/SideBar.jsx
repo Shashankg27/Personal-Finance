@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 const SideBar = ( {focus} ) => {
   return (
-    <div className='flex flex-col bg-[#1f2937] gap-3 h-screen p-4 border !border-gray-700'>
+    <div className='flex flex-col bg-[#1f2937] gap-3 h-full p-4 border !border-gray-700'>
       <div className='flex items-center gap-2 mb-6'>
         <i className="fas fa-wallet text-2xl text-blue-500"></i>
         <p className='font-bold text-2xl text-white leading-none m-0'>Finance Buddy</p>

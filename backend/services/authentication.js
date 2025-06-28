@@ -10,7 +10,7 @@ function createToken(user){
         username: user.username,
         incomeCategories: user.incomeCategories,
         expenseCategories: user.expenseCategories,
-        investmentCategories: user.incomeCategories
+        investmentCategories: user.investmentCategories
     };
 
     const token = JWT.sign(payload, secret);

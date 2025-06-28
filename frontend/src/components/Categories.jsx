@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import SideBar from './partials/SideBar';
 import { Link } from 'react-router-dom';
+import CategoryCard from './partials/CategoryCard';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
+
 const Categories = () => {
 //   const [user, setUser] = useState(null);
   let user = null;
@@ -91,11 +93,24 @@ const Categories = () => {
                     <p className="text-sm text-gray-400">Investment categories</p>
                 </div>
             </div>
-            <div className='p-3 flex gap-4'>
-                <div className='bg-[#1e293b] p-4 rounded-lg'>
-                    Categories
+            <div className='p-3 flex gap-4 w-full'>
+                <div className='flex flex-col gap-4 w-[75%]'>
+                    <div className='bg-[#1e293b] p-4 rounded-lg'>
+                        <p className='text-xl font-bold'>Income Categories</p>
+                        <div className='border !border-gray-700 mb-4'></div>
+                        {user.incomeCategories.map((category, index) => (
+                            <CategoryCard category={category} />
+                        ))}
+                    </div>
+                    <div className='bg-[#1e293b] p-4 rounded-lg'>
+                        <p className='text-xl font-bold'>Expense Categories</p>
+                        <div className='border !border-gray-700 mb-4'></div>
+                        {user.expenseCategories.map((category, index) => (
+                            <CategoryCard category={category} />
+                        ))}
+                    </div>
                 </div>
-                <div className='flex flex-col gap-2 bg-[#1e293b] p-4 rounded-lg'>
+                <div className='flex flex-col gap-2 bg-[#1e293b] p-4 rounded-lg w-[25%] h-min'>
                     <p className='m-0 font-bold'>Quick Actions</p>
                     <Link to='addCategory' state={{ value: "incomeCategories" }} className='text-white !no-underline bg-green-600 py-1 px-5 text-sm rounded-lg'>+ Add Income Category</Link>
                     <Link to='addCategory' state={{ value: "expenseCategories" }} className='text-white !no-underline bg-red-600 py-1 px-5 text-sm rounded-lg'>+ Add Expense Category</Link>
