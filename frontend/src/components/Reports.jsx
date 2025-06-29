@@ -27,7 +27,7 @@ const Reports = () => {
   return (
     <div className="flex">
       <div>
-        <SideBar focus="settings" />
+        <SideBar focus="Reports" />
       </div>
       <div className="flex-1">
         <div className="bg-[#0f172a] min-h-screen text-white">

@@ -27,7 +27,7 @@ const Income = () => {
   return (
     <div className="flex">
       <div>
-        <SideBar focus="settings" />
+        <SideBar focus="Income" />
       </div>
       <div className="flex-1">
         <div className="bg-[#0f172a] min-h-screen text-white">
@@ -53,7 +53,10 @@ const Income = () => {
             <div className="bg-[#1e293b] rounded-lg p-6">
               <h4 className="text-xl text-white font-semibold flex items-center gap-8">
                 Total Budget
-                <i classname="fas fa-wallet"style={{color: "#5ea8ff", fontSize: 20}}/>
+                <i
+                  className="fa-solid fa-wallet"
+                  style={{ color: "#5DA8FF" }}
+                />
               </h4>
               <p className="text-4xl font-bold text-[#5ea8ff] mt-3">$4,500</p>
               <p className="text-sm text-gray-400">Monthly Budget limit</p>
@@ -61,26 +64,26 @@ const Income = () => {
 
             <div className="bg-[#1e293b] rounded-lg p-6">
               <h4 className="text-xl text-white font-semibold flex items-center gap-8">
-                Completed
+                Spent This Month
                 <i
-                  className="fas fa-circle-check"
-                  style={{ color: "#2ee97b", fontSize: 20 }}
+                  className="fa-solid fa-credit-card"
+                  style={{ color: "#F26C6C" }}
                 />
               </h4>
-              <p className="text-4xl font-bold text-[#2ee97b] mt-3">3</p>
-              <p className="text-sm text-gray-400">Goals Achieved</p>
+              <p className="text-4xl font-bold text-[#F26C6C] mt-3">$3,200</p>
+              <p className="text-sm text-gray-400">71% of budget used</p>
             </div>
 
             <div className="bg-[#1e293b] rounded-lg p-6">
               <h4 className="text-xl text-white font-semibold flex items-center gap-8">
-                Total Target
+                Remaining Budget
                 <i
-                  className="fas fa-dollar-sign"
-                  style={{ color: "#c27cfb", fontSize: 20 }}
+                  className="fa-solid fa-piggy-bank"
+                  style={{ color: "#5BE38D" }}
                 />
               </h4>
-              <p className="text-4xl font-bold text-[#c27cfb] mt-3">$45,000</p>
-              <p className="text-sm text-gray-400">Combined targets</p>
+              <p className="text-4xl font-bold text-[#5BE38D] mt-3">$1,300</p>
+              <p className="text-sm text-gray-400">29% remaining</p>
             </div>
           </div>
         </div>

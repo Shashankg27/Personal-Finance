@@ -27,7 +27,7 @@ const Goals = () => {
   return (
     <div className="flex">
       <div>
-        <SideBar focus="settings" />
+        <SideBar focus="Goals" />
       </div>
       <div className="flex-1">
         <div className="bg-[#0f172a] min-h-screen text-white">
