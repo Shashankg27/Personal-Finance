@@ -45,8 +45,8 @@ const Transactions = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 p-3">
-            <div className="bg-[#1e293b] p-4 rounded-xl w-full">
+          <div className="p-3">
+            <div className="bg-[#1e293b] p-4 rounded-xl">
               {/* Search */}
               <div className="flex gap-4">
                 <div>
@@ -66,7 +66,7 @@ const Transactions = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col w-[25%]">
                   {/* Category */}
                   <label className="block text-white mb-1">Category</label>
                   <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full">
@@ -74,7 +74,7 @@ const Transactions = () => {
                   </select>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col w-[25%]">
                   {/* Type */}
                   <label className="block text-white mb-1">Type</label>
                   <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full">
@@ -84,7 +84,7 @@ const Transactions = () => {
                   </select>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col w-[25%]">
                   {/*Date range */}
                   <label className="block text-white mb-1">Date Range</label>
                   <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full">

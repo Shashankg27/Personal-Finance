@@ -53,7 +53,7 @@ const Categories = () => {
             {/* Cards Section*/}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
                 <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                    <p className="text-xl text-white font-semibold flex items-center gap-8">
                     Total Categories <i className="fas fa-tags" />
                     </p>
                     <p className="text-2xl text-blue-400 font-bold mt-1">{user.incomeCategories.length + user.expenseCategories.length + user.investmentCategories.length}</p>
@@ -61,7 +61,7 @@ const Categories = () => {
                 </div>
 
                 <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                    <p className="text-xl text-white font-semibold flex items-center gap-8">
                     Income Categories
                     <i
                         className="fa-solid fa-arrow-up"
@@ -73,7 +73,7 @@ const Categories = () => {
                 </div>
 
                 <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                    <p className="text-xl text-white font-semibold flex items-center gap-8">
                     Expense Categories
                     <i
                         className="fa-solid fa-arrow-down"
@@ -85,7 +85,7 @@ const Categories = () => {
                 </div>
 
                 <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-sm text-gray-400 flex items-center gap-2">
+                    <p className="text-xl text-white font-semibold flex items-center gap-8">
                     Investment Types
                     <i className="fas fa-chart-line text-purple-400" />
                     </p>
@@ -98,16 +98,20 @@ const Categories = () => {
                     <div className='bg-[#1e293b] p-4 rounded-lg'>
                         <p className='text-xl font-bold'>Income Categories</p>
                         <div className='border !border-gray-700 mb-4'></div>
-                        {user.incomeCategories.map((category, index) => (
-                            <CategoryCard category={category} />
-                        ))}
+                        <div className='flex gap-3 flex-col'>
+                            {user.incomeCategories.map((category, index) => (
+                                <CategoryCard category={category} />
+                            ))}
+                        </div>
                     </div>
                     <div className='bg-[#1e293b] p-4 rounded-lg'>
                         <p className='text-xl font-bold'>Expense Categories</p>
                         <div className='border !border-gray-700 mb-4'></div>
-                        {user.expenseCategories.map((category, index) => (
-                            <CategoryCard category={category} />
-                        ))}
+                        <div className='flex flex-col gap-3'>
+                            {user.expenseCategories.map((category, index) => (
+                                <CategoryCard category={category} />
+                            ))}
+                        </div>
                     </div>
                 </div>
                 <div className='flex flex-col gap-2 bg-[#1e293b] p-4 rounded-lg w-[25%] h-min'>

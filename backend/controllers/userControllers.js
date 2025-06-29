@@ -59,14 +59,32 @@ const handleAddInvestment = async (req, res) => {
     }
 }
 
+const handleDeleteInvestment = async (req, res) => {
+    try{
+        const token = req.cookies.token;
+        const user = validateToken(token);
+        
+        await Investments.findOneAndDelete({
+            name: req.body.name,
+            userId: user._id
+        });
+
+        return res.status(201).json({ success: "Investment deleted Successfully" });
+    }
+    catch(err){
+        return res.status(500).json({ message: err.message });
+    }
+}
+
 const handleAddCategory = async (req, res) => {
     const { categoryData } = req.body;
 
     try{
         const prevToken = req.cookies.token;
+        console.log(req.cookies);
         const prevUser = validateToken(prevToken);
         const type = categoryData.type;
-        const user = await User.findOne({ username: prevUser.username });
+        const user = await User.findOne({ _id: prevUser._id });
         if(!user){
             return res.status(404).json({ success: false, message: "User not found" });
         }
@@ -98,4 +116,46 @@ const handleAddCategory = async (req, res) => {
     }
 }
 
-module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment }
+const handleDeleteCategory = async (req, res) => {
+    const { name, type } = req.body.category;
+    
+    try{
+        const prevToken = req.cookies.token;
+        console.log(req.cookies);
+        const prevUser = validateToken(prevToken);
+        const user = await User.findOne({ _id: prevUser._id });
+        if(!user){
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+        
+        const categoryIndex = user[type].findIndex(
+            (cat) => cat.name.toLowerCase() ===  req.body.category.name.toLowerCase()
+        );
+        console.log(user[type]);
+        console.log(req.body.category);
+        console.log(categoryIndex);
+        if(categoryIndex === -1){
+            return res.status(404).json({ success: false, message: "Category not found!" });
+        }
+        user[type].splice(categoryIndex, 1);
+
+        await user.save();
+        
+        const token = createToken(user);
+
+        console.log(token);
+        console.log(validateToken(token));
+
+        return res.cookie("token", token, {
+            httpOnly: false,
+            secure: true,
+            sameSite: "none",
+        }).json({ success: true, message: "Category removed successfully"});
+    }
+    catch(error){
+        console.error("Error removing category:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+}
+
+module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory }

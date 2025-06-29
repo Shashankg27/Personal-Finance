@@ -1,8 +1,34 @@
+import axios from 'axios';
 import React from 'react'
+import { useNavigate } from 'react-router-dom';
 
 const CategoryCard = ({ category }) => {
     const percentage = (category?.current || 0)/category.budget;
     const rem = category.budget - (category?.current || 0);
+    const navigate = useNavigate();
+
+    const handleDelete = async (e) => {
+        e.preventDefault();
+
+        try{
+            const response = await axios.delete(`${import.meta.env.VITE_BACKEND_API}/user/deleteCategory`, {
+                data: {
+                    category
+                },
+                withCredentials: true
+            });
+            if(response.data.success){
+                window.location.reload();
+            }
+            else{
+                alert(response.data.message || "Cannot delete catrgory");
+            }
+        }
+        catch(err){
+            console.log("Error message: " + err);
+            alert("Server side issue!");
+        }
+    }
   return (
     <div className={`flex flex-col gap-0 m-0 border border-0.75 rounded-xl ${category.type === 'expenseCategories'? "bg-[#322732] !border-red-400":"bg-[#1d3235] !border-green-400"} p-4`}>
         <div className='m-0 flex justify-between'>
@@ -16,7 +42,7 @@ const CategoryCard = ({ category }) => {
                 <p className='m-0 font-semibold text-md text-gray-400'>This month</p>
                 <div className='flex gap-3 p-2'>
                     <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>
-                    <i className="fa-solid fa-trash" style={{color: '#d10000'}}></i>
+                    <i className="fa-solid fa-trash" onClick={handleDelete} style={{color: '#d10000'}}></i>
                 </div>
             </div>
         </div>

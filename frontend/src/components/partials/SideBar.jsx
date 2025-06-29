@@ -8,42 +8,42 @@ const SideBar = ( {focus} ) => {
         <i className="fas fa-wallet text-2xl text-blue-500"></i>
         <p className='font-bold text-2xl text-white leading-none m-0 hidden md:block'>Finance Buddy</p>
       </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-chart-pie" style={{ color: '#ffffff' }} />
-        <Link to='/home' className='text-white !no-underline hidden md:block'>Dashboard</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-arrow-right-arrow-left" style={{ color: '#ffffff' }} />
-        <Link to='/transactions' className='text-white !no-underline hidden md:block'>Transactions</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-piggy-bank" style={{ color: '#ffffff' }} />
-        <Link to='/incomeBudget' className='text-white !no-underline hidden md:block'>Income/Budget</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-chart-line" style={{ color: '#ffffff' }} />
-        <Link to='/investments' className='text-white !no-underline hidden md:block'>Investments</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-hand-holding-dollar" style={{ color: '#ffffff' }} />
-        <Link to='/loans' className='text-white !no-underline hidden md:block'>Loans</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-bullseye" style={{ color: '#ffffff' }} />
-        <Link to='/goals' className='text-white !no-underline hidden md:block'>Goals</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-tags" style={{ color: '#ffffff' }} />
-        <Link to='/categories' className='text-white !no-underline hidden md:block'>Categories</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-file-export" style={{ color: '#ffffff' }} />
-        <Link to='/reports' className='text-white !no-underline hidden md:block'>Reports</Link>
-      </div>
-      <div className='flex items-center gap-2 opacity-80 hover:opacity-100'>
-        <i className="fa-solid fa-gear" style={{ color: '#ffffff' }} />
-        <Link to='/settings' className='text-white !no-underline hidden md:block'>Settings</Link>
-      </div>
+      <Link to='/home' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-chart-pie m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white hidden md:block m-0'>Dashboard</p>
+      </Link>
+      <Link  to='/transactions' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-arrow-right-arrow-left m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Transactions</p>
+      </Link>
+      <Link to='/incomeBudget' className='flex items-center !no-underline gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-piggy-bank m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Income/Budget</p>
+      </Link>
+      <Link to='/investments' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-chart-line m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Investments</p>
+      </Link>
+      <Link to='/loans' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-hand-holding-dollar m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Loans</p>
+      </Link>
+      <Link to='/goals' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-bullseye m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Goals</p>
+      </Link>
+      <Link to='/categories' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-tags m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Categories</p>
+      </Link>
+      <Link to='/reports' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-file-export m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Reports</p>
+      </Link>
+      <Link to='/settings' className='flex !no-underline items-center gap-2 opacity-80 hover:opacity-100'>
+        <i className="fa-solid fa-gear m-0" style={{ color: '#ffffff' }} />
+        <p className='text-white m-0 hidden md:block'>Settings</p>
+      </Link>
     </div>
   )
 }
