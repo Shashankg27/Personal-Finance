@@ -13,6 +13,7 @@ import Income from './components/Income'
 import Loan from './components/Loan'
 import Goals from './components/Goals'
 import Reports from './components/Reports'
+import AddInvestment from './components/partials/AddInvestment'
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
       <Route path="/goals" element={<Goals />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/categories/addCategory" element={<AddCategory />} />
+      <Route path="/investments/addInvestments" element={<AddInvestment />} />
     </Routes>
   )
 }
