@@ -42,13 +42,15 @@ const handleAddInvestment = async (req, res) => {
     try{
         const token = req.cookies.token;
         const user = validateToken(token);
+        console.log(req.body);
+        const { investmentData } = req.body;
         await Investments.create({
-            name: req.body.name,
-            note: req.body.note,
-            date: req.body?.date,
-            principal: req.body.principal,
-            ROI: req.body.ROI,
-            category: req.body.category,
+            name: investmentData.name,
+            note: investmentData.note,
+            date: investmentData?.date,
+            principal: investmentData.principal,
+            ROI: investmentData.roi,
+            category: investmentData.category,
             userId: user._id
         });
 
@@ -61,12 +63,9 @@ const handleAddInvestment = async (req, res) => {
 
 const handleDeleteInvestment = async (req, res) => {
     try{
-        const token = req.cookies.token;
-        const user = validateToken(token);
-        
         await Investments.findOneAndDelete({
-            name: req.body.name,
-            userId: user._id
+            name: req.body.investment.name,
+            userId: req.body.investment.userId
         });
 
         return res.status(201).json({ success: "Investment deleted Successfully" });
@@ -158,4 +157,18 @@ const handleDeleteCategory = async (req, res) => {
     }
 }
 
-module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory }
+const handleGetInvestments = async (req, res) => {
+    try{
+        const token = req.cookies.token;
+        const user = validateToken(token);
+
+        const investments = await Investments.find({ userId: user._id });
+
+        return res.status(200).json({ success: 'Investments fetched success', investments });
+    }
+    catch(err){
+        return res.status(500).json({ error: err });
+    }
+}
+
+module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment }

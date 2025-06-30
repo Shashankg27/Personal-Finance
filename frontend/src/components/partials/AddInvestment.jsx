@@ -19,7 +19,7 @@ const AddInvestment = () => {
   if (token) {
     const userData = jwtDecode(token);
     // setUser(userData);
-    console.log(userData);
+    // console.log(userData);
     user = userData;
   }
   console.log(user);
@@ -98,7 +98,7 @@ const AddInvestment = () => {
               >
                 <option value="">Select Category</option>
                 {user.investmentCategories.map((category, index) => (
-                  <option value={category}>{category}</option>
+                  <option value={category.name}>{category.name}</option>
                 ))}
               </select>
             </div>

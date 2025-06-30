@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import SideBar from './partials/SideBar';
 import { Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import axios from "axios";
+import InvestmentCard from './partials/InvestmentCard';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -10,83 +12,141 @@ function getCookie(name) {
 }
 
 const Investments = () => {
-    //   const [user, setUser] = useState(null);
-      let user = null;
-      
-    //   useEffect(() => {
-            const token = getCookie('token');
-            console.log(token);
-            if(token){
+    const [user, setUser] = useState({});
+    const [investments, setInvestments] = useState([]);
+
+    useEffect(() => {
+        const token = getCookie('token');
+        if (token) {
             const userData = jwtDecode(token);
-            // setUser(userData);
-            console.log(userData);
-            user = userData;
-            }
-            console.log(user);
-    //   }, []);
-  return (
-    <div className='flex'>
-        <div>
-            <SideBar />
-        </div>
-        <div className='flex-1 bg-[#111827]'>
-            <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700 text-white">
-                <h3 className="text-2xl font-semibold">Investments & Savings</h3>
-                <div className="flex items-center gap-4">
-                    <Link to='/investments/addInvestments' className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
-                    + Add Investment
-                    </Link>
-                    <div className="flex items-center gap-2">
-                    {/* <img
-                        src="https://randomuser.me/api/portraits/women/45.jpg"
-                        alt="John Doe"
-                        className="w-8 h-8 rounded-full"
-                    /> */}
-                    <span className="text-sm">{user.name}</span>
+            setUser(userData);
+
+            axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getInvestments`, {
+                withCredentials: true
+            })
+            .then((res) => {
+                setInvestments(res.data.investments);
+            })
+            .catch((err) => {
+                console.error('Error fetching investments:', err);
+            });
+        }
+    }, []);
+
+    const updatedInvestments = investments.map((investment) => {
+        const startDate = new Date(investment.date);
+        const currentDate = new Date();
+        const diffInYears = (currentDate - startDate) / (1000 * 60 * 60 * 24 * 365.25);
+        const diffInMonths = diffInYears * 12;
+
+        const currentValue = investment.principal * Math.pow((1 + investment.ROI), diffInYears);
+        const monthlyReturns = (currentValue - investment.principal) / diffInMonths;
+
+        return {
+            ...investment,
+            current: parseFloat(currentValue.toFixed(2)),
+            monthlyReturns: parseFloat(monthlyReturns.toFixed(2)),
+            formattedDate: startDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })
+        };
+    });
+
+    let totalInvested = 0, currentValue = 0, totalReturns = 0, monthlyReturns = 0;
+    updatedInvestments.map((investment) => (
+        totalInvested += investment.principal,
+        currentValue += investment.current,
+        monthlyReturns += investment.monthlyReturns
+    ));
+    
+    monthlyReturns = monthlyReturns.toFixed(2);
+    currentValue = currentValue.toFixed(2);
+    totalReturns = (currentValue - totalInvested).toFixed(2);
+    const currentROI = ((totalReturns/totalInvested) *100).toFixed(2);
+
+    if (!user) return <div className="text-white p-4">Loading...</div>;
+
+    return (
+        <div className='flex'>
+            <div>
+                <SideBar />
+            </div>
+            <div className='flex-1 bg-[#111827]'>
+                <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700 text-white">
+                    <h3 className="text-2xl font-semibold">Investments & Savings</h3>
+                    <div className="flex items-center gap-4">
+                        <Link to='/investments/addInvestments' className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
+                            + Add Investment
+                        </Link>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm">{user.name}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
+                    <div className="bg-[#1e293b] rounded-lg p-4">
+                        <p className="text-xl text-white font-semibold flex items-center gap-8">
+                            Total Invested <i className="fas fa-chart-line text-blue-400"/>
+                        </p>
+                        <p className="text-2xl text-blue-400 font-bold mt-1">
+                            ${totalInvested}
+                        </p>
+                        <p className="text-sm text-gray-400">Principal Amount</p>
+                    </div>
+
+                    <div className="bg-[#1e293b] rounded-lg p-4">
+                        <p className="text-xl text-white font-semibold flex items-center gap-8">
+                            Current Values 
+                            <i className="fa-solid fa-dollar-sign text-green-400" />
+                        </p>
+                        <p className={`text-2xl font-bold ${currentValue>totalInvested? "text-green-400": "text-red-400"} mt-1`}>
+                            ${currentValue}
+                        </p>
+                        <p className="text-sm text-gray-400">Market Value</p>
+                    </div>
+
+                    <div className="bg-[#1e293b] rounded-lg p-4">
+                        <p className="text-xl text-white font-semibold flex items-center gap-8">
+                            Total Returns 
+                            <i className="fas fa-spinner fa-spin text-2xl text-red-400"></i>
+                        </p>
+                        <p className={`text-2xl font-bold ${currentValue>totalInvested? "text-green-400": "text-red-400"} mt-1`}>
+                            ${totalReturns}
+                        </p>
+                        <p className={`text-md font-semibold ${currentValue>totalInvested? "text-green-400": "text-red-400"}`}>{currentValue>totalInvested? "+" : "-"}{currentROI}%</p>
+                    </div>
+
+                    <div className="bg-[#1e293b] rounded-lg p-4">
+                        <p className="text-xl text-white font-semibold flex items-center gap-8">
+                            Monthly Returns
+                            <i className="fa-solid fa-calendar text-purple-400" />
+                        </p>
+                        <p className="text-2xl font-bold text-purple-400 mt-1">
+                            ${monthlyReturns}
+                        </p>
+                        <p className="text-sm text-gray-400">This month</p>
+                    </div>
+                </div>
+                <div className='flex gap-4 p-3 w-full text-white'>
+                    <div className='w-[60%] p-4 rounded-xl bg-[#1e293b]'>
+                        <p className='text-xl font-semibold'>Investment portfolio</p>
+                        <div className='border !border-gray-700 mb-4'></div>
+                        <div className='flex p-1 flex-col gap-2'>
+                            {updatedInvestments.map((investment, index) => (
+                                <InvestmentCard investment={investment}/>
+                            ))}
+                        </div>
+                    </div>
+                    <div className='w-[40%] flex flex-col gap-3'>
+                        <div></div>
+                        <div></div>
                     </div>
                 </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
-                <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-xl text-white font-semibold flex items-center gap-8">
-                    Total Invested <i className="fas fa-chart-line text-blue-400"/>
-                    </p>
-                    <p className="text-2xl text-blue-400 font-bold mt-1">{user.incomeCategories.length + user.expenseCategories.length + user.investmentCategories.length}</p>
-                    <p className="text-sm text-gray-400">Principal Amount</p>
-                </div>
-
-                <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-xl text-white font-semibold flex items-center gap-8">
-                    Current Values 
-                    <i className="fa-solid fa-dollar-sign text-green-400" />
-
-                    </p>
-                    <p className="text-2xl font-bold text-green-400 mt-1">{user.incomeCategories.length}</p>
-                    <p className="text-sm text-gray-400">Market Value</p>
-                </div>
-
-                <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-xl text-white font-semibold flex items-center gap-8">
-                    Total Returns 
-                    <i className="fas fa-spinner fa-spin text-2xl text-red-400"></i>
-                    </p>
-                    <p className="text-2xl font-bold text-red-400 mt-1">{user.expenseCategories.length}</p>
-                    <p className="text-sm text-gray-400">ROI</p>
-                </div>
-
-                <div className="bg-[#1e293b] rounded-lg p-4">
-                    <p className="text-xl text-white font-semibold flex items-center gap-8">
-                    Monthly Returns
-                    <i className="fa-solid fa-calendar text-purple-400" />
-
-                    </p>
-                    <p className="text-2xl font-bold text-purple-400 mt-1">{user.investmentCategories.length}</p>
-                    <p className="text-sm text-gray-400">This month</p>
-                </div>
-            </div>
         </div>
-    </div>
-  )
-}
+    );
+};
 
-export default Investments
+export default Investments;
