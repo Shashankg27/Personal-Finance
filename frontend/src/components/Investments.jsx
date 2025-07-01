@@ -14,6 +14,8 @@ function getCookie(name) {
 const Investments = () => {
     const [user, setUser] = useState({});
     const [investments, setInvestments] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [updatedInvestments, setUpdatedInvestments] = useState([]);
 
     useEffect(() => {
         const token = getCookie('token');
@@ -33,16 +35,21 @@ const Investments = () => {
         }
     }, []);
 
-    const updatedInvestments = investments.map((investment) => {
-        const startDate = new Date(investment.date);
-        const currentDate = new Date();
-        const diffInYears = (currentDate - startDate) / (1000 * 60 * 60 * 24 * 365.25);
-        const diffInMonths = diffInYears * 12;
+    useEffect(() => {
+        const filteredInvestments = selectedCategory
+            ? investments.filter(inv => inv.category === selectedCategory)
+            : investments;
 
-        const currentValue = investment.principal * Math.pow((1 + investment.ROI), diffInYears);
-        const monthlyReturns = (currentValue - investment.principal) / diffInMonths;
+        const updated = filteredInvestments.map((investment) => {
+            const startDate = new Date(investment.date);
+            const currentDate = new Date();
+            const diffInYears = (currentDate - startDate) / (1000 * 60 * 60 * 24 * 365.25);
+            const diffInMonths = diffInYears * 12;
 
-        return {
+            const currentValue = investment.principal * (Math.pow((1 + investment.ROI), diffInYears) || 1);
+            const monthlyReturns = (currentValue - investment.principal) / diffInMonths;
+
+            return {
             ...investment,
             current: parseFloat(currentValue.toFixed(2)),
             monthlyReturns: parseFloat(monthlyReturns.toFixed(2)),
@@ -51,8 +58,14 @@ const Investments = () => {
                 month: 'long',
                 day: 'numeric'
             })
-        };
-    });
+            };
+        }).sort((a, b) => b.ROI - a.ROI);
+
+        setUpdatedInvestments(updated);
+    }, [selectedCategory, investments]);
+
+    console.log("Sorted investments: ");
+    console.log(updatedInvestments);
 
     let totalInvested = 0, currentValue = 0, totalReturns = 0, monthlyReturns = 0;
     updatedInvestments.map((investment) => (
@@ -65,6 +78,9 @@ const Investments = () => {
     currentValue = currentValue.toFixed(2);
     totalReturns = (currentValue - totalInvested).toFixed(2);
     const currentROI = ((totalReturns/totalInvested) *100).toFixed(2);
+    console.log("user:");
+    console.log(user);
+    console.log(user.investmentCategories);
 
     if (!user) return <div className="text-white p-4">Loading...</div>;
 
@@ -130,8 +146,20 @@ const Investments = () => {
                     </div>
                 </div>
                 <div className='flex gap-4 p-3 w-full text-white'>
-                    <div className='w-[60%] p-4 rounded-xl bg-[#1e293b]'>
-                        <p className='text-xl font-semibold'>Investment portfolio</p>
+                    <div className='w-[78%] p-4 rounded-xl bg-[#1e293b] h-min'>
+                        <div className='flex justify-between'>
+                            <p className='text-xl font-semibold'>Investment portfolio</p>
+                            <div className='bg-[#374151] h-min p-1.5 rounded-lg'>
+                                <select name="category" id="category" onChange={(e) => setSelectedCategory(e.target.value)}>
+                                    <option value="" className='text-white bg-[#374151]'>Select Type</option>
+                                    {user.investmentCategories && user.investmentCategories.map((category, index) => (
+                                    <option key={index} value={category.name} className='text-white bg-[#374151]'>
+                                        {category.name}
+                                    </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                         <div className='border !border-gray-700 mb-4'></div>
                         <div className='flex p-1 flex-col gap-2'>
                             {updatedInvestments.map((investment, index) => (
@@ -139,9 +167,28 @@ const Investments = () => {
                             ))}
                         </div>
                     </div>
-                    <div className='w-[40%] flex flex-col gap-3'>
-                        <div></div>
-                        <div></div>
+                    <div className='w-[28%] flex flex-col gap-3'>
+                        <div className='bg-[#1e293b] rounded-lg p-4'>
+                            <p className='font-semibold text-xl'>Top Performers</p>
+                            <div className='flex flex-col gap-3'>
+                                {updatedInvestments.slice(0, 3).map((investment, index) => (
+                                    <div className='flex justify-between'>
+                                        <div>
+                                            <p className='m-0 text-md font-semibold'>{investment.name}</p>
+                                            <p className='m-0 text-sm text-gray-400'>{investment.note.slice(0, 6) + (investment.note.length>5?'...':'')}</p>
+                                        </div>
+                                        <div>
+                                            <p className={`m-0 ${investment.ROI>0?'text-green-400':'text-red-400'} font-bold`}>{(investment.ROI>0?'+':'') + investment.ROI}%</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className='bg-[#1e293b] rounded-lg p-4 flex flex-col gap-2'>
+                            <p className='font-semibold text-xl'>Quick Actions</p>
+                            <Link to='/investments/addInvestments' className='py-1.5 px-3 w-full bg-[#374151] rounded-lg text-white !no-underline'><span className='text-green-400 text-xl'>+</span> Add New Investment</Link>
+                            <Link to='/categories/addCategory' className='py-1.5 px-3 w-full bg-[#374151] rounded-lg text-white !no-underline' state={{ value: "investmentCategories" }}><span className='text-green-400 text-xl'>+</span> Add New Investment Category</Link>
+                        </div>
                     </div>
                 </div>
             </div>

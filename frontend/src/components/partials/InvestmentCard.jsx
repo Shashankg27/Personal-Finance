@@ -39,7 +39,7 @@ const InvestmentCard = ({ investment }) => {
         </div>
         <div>
             <p className='m-0 text-md text-gray-400 font-semibold'>ROI</p>
-            <p className={`m-0 text-lg font-semibold ${investment.ROI<0?"text-red-400":"text-green-400"}`}>{investment.ROI}%</p>
+            <p className={`m-0 text-lg font-semibold ${investment.ROI<0?"text-red-400":"text-green-400"}`}>{(investment.ROI>0?'+':'') + investment.ROI}%</p>
         </div>
         <div className='flex gap-3 items-center justify-center'>
             <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>
