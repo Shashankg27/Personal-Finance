@@ -14,7 +14,8 @@ const AddCategory = () => {
     type: defaultType,
     name: "",
     note: "",
-    budget: 0
+    budget: 0,
+    recurring: false
   });
 
   const handleSubmit = async (e) => {
@@ -95,15 +96,20 @@ const AddCategory = () => {
 
             {/* Budget */}
             <div>
-              <label className="block text-gray-300 mb-1">Budget</label>
+              <label className="block text-gray-300 mb-1">{categoryData.type === "expenseCategories"? "Budget":"Amount"}</label>
               <input
                 type="number"
                 name='budget'
                 value={categoryData.budget}
                 onChange={(e) => setCategoryData({ ...categoryData, budget: e.target.value })}
-                placeholder="Enter budget amount"
+                placeholder={`Enter budget amount`}
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            <div className="flex gap-2">
+              <input type="checkbox" name="recurring" id="recurring" checked={categoryData.recurring} onChange={(e) => setCategoryData({ ...categoryData, recurring: e.target.checked})}/>
+              <label className="text-white">Recurring</label>
             </div>
 
             {/* Submit Button */}
