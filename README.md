@@ -16,7 +16,7 @@ This project is a personal finance management tool designed to help users track 
 
 ## Future Updates
 
-🌐 Multi-Currency Support
+# 🌐 Multi-Currency Support
 Easily manage finances in different currencies. Add income, expenses, and categories in your preferred currency, and switch between them seamlessly.
 
 🌗 Dark/Light Mode
