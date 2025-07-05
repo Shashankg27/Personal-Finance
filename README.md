@@ -16,16 +16,16 @@ This project is a personal finance management tool designed to help users track 
 
 ## Future Updates
 
-🌐 Multi-Currency Support
+### 🌐 Multi-Currency Support
 Easily manage finances in different currencies. Add income, expenses, and categories in your preferred currency, and switch between them seamlessly.
 
-🌗 Dark/Light Mode
+### 🌗 Dark/Light Mode
 Switch between dark and light themes based on your preference or system settings. Enjoy a more comfortable viewing experience anytime, anywhere.
 
-⏰ Bill Reminders
+### ⏰ Bill Reminders
 Never miss a due date! Set reminders for upcoming bills and get notified before payments are due—helping you stay on top of your finances.
 
-🔄 Smart Recurring Detection (Planned Feature)
+### 🔄 Smart Recurring Detection
 In a future update, FinanceBuddy will include an intelligent auto-recurring detection system that simplifies category setup by identifying common income types and automatically configuring their recurrence frequency.
 
 📌 Feature Overview:
