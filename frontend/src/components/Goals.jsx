@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
+import { Link } from "react-router-dom";
+import axios from "axios";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -8,22 +10,29 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-//   const [user, setUser] = useState(null);
-let user = null;
-
-//   useEffect(() => {
-const token = getCookie("token");
-console.log(token);
-if (token) {
-  const userData = jwtDecode(token);
-  // setUser(userData);
-  console.log(userData);
-  user = userData;
-}
-console.log(user);
-//   }, []);
-
 const Goals = () => {
+  const [user, setUser] = useState({});
+  const [goals, setGoals] = useState([]);
+  useEffect(() => {
+    const token = getCookie("token");
+    if (token) {
+      const userData = jwtDecode(token);
+      setUser(userData);
+
+      const response = axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setGoals(res.data.userGoals);
+        })
+        .catch((error) => {
+          console.log("Error fetching goals! ", error);
+        });
+    }
+  }, []);
+  console.log(goals)
+
   return (
     <div className="flex">
       <div>
@@ -35,10 +44,13 @@ const Goals = () => {
           <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
             <h3 className="text-2xl font-semibold">Goals</h3>
             <div className="flex items-center gap-3">
-              <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
+              <Link
+                to="addGoal"
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline"
+              >
                 <i className="fa-solid fa-plus p-2" />
                 Add Goal
-              </button>
+              </Link>
               <div className="flex items-center gap-2">
                 <span className="text-sm">{user.name}</span>
               </div>
