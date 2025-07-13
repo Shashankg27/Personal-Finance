@@ -2,6 +2,7 @@ const User = require("../models/User");
 const jwt = require('jsonwebtoken');
 const { createToken, validateToken } = require("../services/authentication");
 const Investments = require("../models/Investment");
+const transactions = require("../models/Transaction");
 const SECRET = process.env.JWT_SECRET;
 
 const handleSignUp = async (req, res) => {
@@ -161,9 +162,9 @@ const handleGetInvestments = async (req, res) => {
     try{
         const token = req.cookies.token;
         const user = validateToken(token);
-
+        
         const investments = await Investments.find({ userId: user._id });
-
+        
         return res.status(200).json({ success: 'Investments fetched success', investments });
     }
     catch(err){
@@ -171,4 +172,46 @@ const handleGetInvestments = async (req, res) => {
     }
 }
 
-module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment }
+const handleAddTransaction = async (req, res) => {
+    const { transactionData } = req.body;
+    console.log(transactionData);
+    try{
+        await transactions.create({
+            ...transactionData
+        });
+
+        return res.status(201).json({ success: "Transaction added successfully" });
+    }
+    catch(err){
+        return res.status(500).json({ message: err });
+    }
+}
+
+const handleDeleteTransaction = async (req, res) => {
+    const { id } = req.body;
+    
+    try{
+        await transactions.findByIdAndDelete(id);
+
+        return res.status(200).json({ success: "Transaction deleted successfully" });
+    }
+    catch(err){
+        return res.status(404).json({ message: err });
+    }
+}
+
+const handleGetTransactions = async (req, res) => {
+    try{
+        const token = req.cookies.token;
+        const user = validateToken(token);
+
+        const userTransactions = await transactions.find({ userId: user._id });
+
+        return res.status(201).json({ success: "Transactions fetched successfully", userTransactions });
+    }
+    catch(err){
+        return res.status(404).json({ message: err });
+    }
+}
+
+module.exports = { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment, handleAddTransaction, handleDeleteTransaction, handleGetTransactions }

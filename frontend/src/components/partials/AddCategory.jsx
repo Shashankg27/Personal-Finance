@@ -2,6 +2,11 @@ import React, { useState, useEffect } from "react";
 import axios from 'axios';
 import { useNavigate, useLocation } from "react-router-dom";
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+}
 
 const AddCategory = () => {
   const navigate = useNavigate();

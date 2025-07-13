@@ -1,6 +1,75 @@
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import React from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+}
 
 const AddTransaction = () => {
+  const [user, setUser] = useState({});
+  const navigate = useNavigate();
+  useEffect(() => {
+      const token = getCookie('token');
+      if (token) {
+          const userData = jwtDecode(token);
+          setUser(userData);
+      }
+  }, []);
+        
+  // console.log(user._id);
+  const [transactionData, setTransactionData] = useState({
+    name: "",
+    type: "expense",
+    category: "",
+    descrption: "",
+    amount: 0,
+    userId: "",
+    recurring: false,
+    date: ""
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    transactionData.userId = user._id;
+    // console.log(transactionData);
+    if(transactionData.name === ""){
+      alert("Add name");
+      return;
+    }
+    if(transactionData.amount < 0){
+      alert("Amount Cannot be negative!");
+      return;
+    }
+    if(transactionData.category === ""){
+      alert("Select Category!");
+      return;
+    }
+    
+    if(transactionData.description === '') delete transactionData.description;
+    if(transactionData.date === '') delete transactionData.date;
+
+    try{
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_API}/user/addTransaction`, {
+        transactionData: { ...transactionData }
+      }, {
+        withCredentials: true
+      });
+      if (response.data.success) {
+          navigate('/transactions');
+        } else {
+          alert("Failed! Try to add transaction.");
+        }
+    } catch (err) {
+      console.log("Add transaction error: " + err);
+      alert('Failed!');
+    }
+  }
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-4">
       <div className="bg-[#1e293b] text-white rounded-xl w-full max-w-md p-6 shadow-lg relative">
@@ -12,20 +81,32 @@ const AddTransaction = () => {
           </button>
         </div>
         {/* Form */}
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm mb-1">Name</label>
+            <input
+              type='text'
+              placeholder="Name"
+              name="name"
+              onChange={(e) => setTransactionData({ ...transactionData, name: e.target.value })}
+              className="w-full px-4 py-2 bg-[#334155] text-white rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           {/* Amount */}
           <div>
             <label className="block text-sm mb-1">Amount</label>
             <input
               type="number"
               placeholder="0.00"
+              name="amount"
+              onChange={(e) => setTransactionData({ ...transactionData, amount: e.target.value })}
               className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {/* Type */}
           <div>
             <label className="block text-sm mb-1">Type</label>
-            <select className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select name="type" onChange={(e) => setTransactionData({ ...transactionData, type: e.target.value })} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="expense">Expense</option>
               <option value="income">Income</option>
             </select>
@@ -33,11 +114,13 @@ const AddTransaction = () => {
           {/* Category */}
           <div>
             <label className="block text-sm mb-1">Category</label>
-            <select className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="food">Food & Dining</option>
-              <option value="transport">Transport</option>
-              <option value="shopping">Shopping</option>
-              {/* Add more categories as needed */}
+            <select name="category" onChange={(e) => setTransactionData({ ...transactionData, category: e.target.value })} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">Select Category</option>
+              {transactionData.type === 'income'? user.incomeCategories && user.incomeCategories.map((category, index) => (
+                <option value={category.name}>{category.name}</option>
+              )) : user.expenseCategories && user.expenseCategories.map((category, index) => (
+                <option value={category.name}>{category.name}</option>
+              )) }
             </select>
           </div>
           {/* Date */}
@@ -45,6 +128,8 @@ const AddTransaction = () => {
             <label className="block text-sm mb-1">Date</label>
             <input
               type="date"
+              name="date"
+              onChange={(e) => setTransactionData({ ...transactionData, date: e.target.value })}
               className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -53,13 +138,15 @@ const AddTransaction = () => {
             <label className="block text-sm mb-1">Description</label>
             <textarea
               placeholder="Add a note..."
+              name="description"
+              onChange={(e) => setTransactionData({ ...transactionData, description: e.target.value })}
               rows={2}
               className="w-full px-4 py-2 bg-[#334155] text-white rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {/* Recurring */}
-          <div className="flex items-center">
-            <input type="checkbox" id="recurring" className="mr-2" />
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="recurring" className="mr-2" checked={transactionData.recurring} name="recurring" onChange={(e) => setTransactionData({ ...transactionData, recurring: e.target.checked })}/>
             <label className="text-sm">
               Make this a recurring transaction
             </label>
