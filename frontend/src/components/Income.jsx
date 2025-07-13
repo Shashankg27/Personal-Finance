@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
+import axios from "axios";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -8,22 +9,43 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-//   const [user, setUser] = useState(null);
-let user = null;
-
-//   useEffect(() => {
-const token = getCookie("token");
-console.log(token);
-if (token) {
-  const userData = jwtDecode(token);
-  // setUser(userData);
-  console.log(userData);
-  user = userData;
-}
-console.log(user);
-//   }, []);
-
 const Income = () => {
+  const [user, setUser] = useState({});
+  const [transactions, setTransactions] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [updatedTransactions, setUpdatedTransactions] = useState([]);
+
+  useEffect(() => {
+    const token = getCookie("token");
+    if (token) {
+      const userData = jwtDecode(token);
+      setUser(userData);
+
+      const response = axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setTransactions(res.data.userTransactions);
+        })
+        .catch((err) => {
+          console.error("Error fetching transactions:", err);
+        });
+    }
+  }, []);
+  // console.log(transactions)
+  let total_budget = 0;
+  let spent_this_month = 0;
+  user.expenseCategories && user.expenseCategories.map(
+    (category, index) => (total_budget += parseInt(category.budget)
+  ));
+  transactions.forEach((transaction) => {
+    if (transaction.type === "expense") {
+      spent_this_month += transaction.amount;
+    }
+  });
+
   return (
     <div className="flex">
       <div>
@@ -58,7 +80,7 @@ const Income = () => {
                   style={{ color: "#5DA8FF" }}
                 />
               </h4>
-              <p className="text-4xl font-bold text-[#5ea8ff] mt-3">$4,500</p>
+              <p className="text-4xl font-bold text-[#5ea8ff] mt-3">${total_budget}</p>
               <p className="text-sm text-gray-400">Monthly Budget limit</p>
             </div>
 
@@ -70,7 +92,7 @@ const Income = () => {
                   style={{ color: "#F26C6C" }}
                 />
               </h4>
-              <p className="text-4xl font-bold text-[#F26C6C] mt-3">$3,200</p>
+              <p className="text-4xl font-bold text-[#F26C6C] mt-3">${spent_this_month}</p>
               <p className="text-sm text-gray-400">71% of budget used</p>
             </div>
 
@@ -82,8 +104,8 @@ const Income = () => {
                   style={{ color: "#5BE38D" }}
                 />
               </h4>
-              <p className="text-4xl font-bold text-[#5BE38D] mt-3">$1,300</p>
-              <p className="text-sm text-gray-400">29% remaining</p>
+              <p className="text-4xl font-bold text-[#5BE38D] mt-3">${total_budget-spent_this_month}</p>
+              <p className="text-sm text-gray-400">{(((total_budget-spent_this_month)/total_budget)*100).toFixed(2)}% remaining</p>
             </div>
           </div>
         </div>
