@@ -3,7 +3,6 @@ import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import GoalCard from "./partials/GoalCard";
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -31,7 +30,7 @@ const Goals = () => {
         });
     }
   }, []);
-  console.log(goals);
+  console.log(goals)
 
   return (
     <div className="flex">
@@ -92,23 +91,6 @@ const Goals = () => {
               </h4>
               <p className="text-4xl font-bold text-[#c27cfb] mt-3">$45,000</p>
               <p className="text-sm text-gray-400">Combined targets</p>
-            </div>
-          </div>
-
-          <div className="p-3 flex gap-4 w-full">
-            <div className="flex flex-col gap-4 w-[66%]">
-              <div className="bg-[#1e293b] p-4 rounded-lg">
-                <p className="text-xl font-bold">Active Goals</p>
-                <div className="border !border-gray-700 !mb-4"></div>
-                <div className="flex gap-3 flex-col">
-                  {goals.map((goal, index) => (
-                    <>
-                      <GoalCard goal={goal} />
-                      <div></div>
-                    </>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
