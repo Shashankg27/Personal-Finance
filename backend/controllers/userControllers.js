@@ -249,6 +249,19 @@ const handleGetGoals = async (req, res) => {
     return res.status(404).json({ message: err });
   }
 };
+
+const handleDeleteGoal = async (req, res) => {
+  const { goal } = req.body;
+  // console.log(goal._id);
+  try{
+    await goals.findByIdAndDelete(goal._id);
+    return res.status(200).json({ success: "Goal deleted successfully" });
+  }
+  catch(err){
+    return res.status(404).json({ message: err });
+  }
+}
+
 module.exports = {
   handleSignUp,
   handleSignIn,
@@ -262,4 +275,5 @@ module.exports = {
   handleGetTransactions,
   handleAddGoal,
   handleGetGoals,
+  handleDeleteGoal
 };

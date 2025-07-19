@@ -13,20 +13,37 @@ function getCookie(name) {
 const AddTransaction = () => {
   const [user, setUser] = useState({});
   const navigate = useNavigate();
+  const [goals, setGoals] = useState([]);
   useEffect(() => {
       const token = getCookie('token');
       if (token) {
           const userData = jwtDecode(token);
           setUser(userData);
       }
+      const goalResponse = axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setGoals(res.data.userGoals);
+        })
+        .catch((error) => {
+          console.log("Error fetching goals! ", error);
+        });
   }, []);
+
+  const options = {
+    income: user.incomeCategories,
+    expense: user.expenseCategories,
+    goal: goals
+  }
         
   // console.log(user._id);
   const [transactionData, setTransactionData] = useState({
     name: "",
     type: "expense",
     category: "",
-    descrption: "",
+    description: "",
     amount: 0,
     userId: "",
     recurring: false,
@@ -109,6 +126,7 @@ const AddTransaction = () => {
             <select name="type" onChange={(e) => setTransactionData({ ...transactionData, type: e.target.value })} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="expense">Expense</option>
               <option value="income">Income</option>
+              <option value="goal">Goal</option>
             </select>
           </div>
           {/* Category */}
@@ -116,11 +134,11 @@ const AddTransaction = () => {
             <label className="block text-sm mb-1">Category</label>
             <select name="category" onChange={(e) => setTransactionData({ ...transactionData, category: e.target.value })} className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">Select Category</option>
-              {transactionData.type === 'income'? user.incomeCategories && user.incomeCategories.map((category, index) => (
-                <option value={category.name}>{category.name}</option>
-              )) : user.expenseCategories && user.expenseCategories.map((category, index) => (
-                <option value={category.name}>{category.name}</option>
-              )) }
+              { options[transactionData.type] && 
+                options[transactionData.type].map((option) => (
+                  <option value={option.name}>{option.name}</option>
+                ))
+              }
             </select>
           </div>
           {/* Date */}
