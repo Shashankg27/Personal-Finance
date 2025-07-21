@@ -4,6 +4,7 @@ const { createToken, validateToken } = require("../services/authentication");
 const Investments = require("../models/Investment");
 const transactions = require("../models/Transaction");
 const goals = require("../models/Goal");
+const loans = require("../models/Loan");
 const SECRET = process.env.JWT_SECRET;
 
 const handleSignUp = async (req, res) => {
@@ -262,6 +263,47 @@ const handleDeleteGoal = async (req, res) => {
   }
 }
 
+const handleAddLoan = async (req, res) => {
+  const { loanData } = req.body;
+  // console.log(loanData);
+  try {
+    await loans.create({
+      ...loanData,
+    });
+    res.status(201).json({ success: "Loan created successfully!" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: err });
+  }
+};
+const handleGetLoans = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const user = validateToken(token);
+
+    const userLoans = await loans.find({ userId: user._id });
+
+    return res
+      .status(200)
+      .json({ success: "Loans fetched successfully", userLoans });
+  } catch (err) {
+    console.log(err);
+    return res.status(404).json({ message: err });
+  }
+};
+
+const handleDeleteLoan = async (req, res) => {
+  const { loan } = req.body;
+  // console.log(goal._id);
+  try{
+    await loans.findByIdAndDelete(loan._id);
+    return res.status(200).json({ success: "Loan deleted successfully" });
+  }
+  catch(err){
+    return res.status(404).json({ message: err });
+  }
+}
+
 module.exports = {
   handleSignUp,
   handleSignIn,
@@ -275,5 +317,8 @@ module.exports = {
   handleGetTransactions,
   handleAddGoal,
   handleGetGoals,
-  handleDeleteGoal
+  handleDeleteGoal,
+  handleDeleteLoan,
+  handleAddLoan,
+  handleGetLoans
 };

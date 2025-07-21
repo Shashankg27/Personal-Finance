@@ -14,6 +14,7 @@ const Transactions = () => {
     const [user, setUser] = useState({});
     const [transactions, setTransactions] = useState([]);
     const [goals, setGoals] = useState([]);
+    const [loans, setLoans] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedType, setSelectedType] = useState('');
     const [updatedTransactions, setUpdatedTransactions] = useState([]);
@@ -42,6 +43,16 @@ const Transactions = () => {
               })
               .catch((error) => {
                 console.log("Error fetching goals! ", error);
+            });
+            const loanResponse = axios
+              .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
+                withCredentials: true,
+              })
+              .then((res) => {
+                setLoans(res.data.userLoans);
+              })
+              .catch((error) => {
+                console.log("Error fetching loans! ", error);
             });
         }
     }, []);
@@ -123,6 +134,9 @@ const Transactions = () => {
                     {(selectedType === '' || selectedType === 'goals') && goals && goals.map((goal, index) => (
                       <option value={goal.name}>{goal.name}</option>
                     ))}
+                    {(selectedType === '' || selectedType === 'loans') && loans && loans.map((loan, index) => (
+                      <option value={loan.name}>{loan.name}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -136,6 +150,7 @@ const Transactions = () => {
                     <option value='income'>Income</option>
                     <option value='expense'>Expense</option>
                     <option value='goals'>Goals</option>
+                    <option value='loans'>Loans</option>
                   </select>
                 </div>
 
@@ -186,7 +201,7 @@ const Transactions = () => {
                       </div>
                       <div className="flex gap-3 items-center">
                         <div className="flex flex-col gap-1">
-                          <p className={`text-${transaction.type==='expense'?'red-500':'green-500'}`}>{(transaction.type==='expense' || transaction.type === 'goal')?'-':'+'}${transaction.amount}</p>
+                          <p className={`text-${transaction.type==='expense'?'red-500':'green-500'}`}>{(transaction.type==='expense' || transaction.type === 'goal' || transaction.type === 'loan')?'-':'+'}${transaction.amount}</p>
                           <p className="text-gray-400">{transaction.type}</p>
                         </div>
                         <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>

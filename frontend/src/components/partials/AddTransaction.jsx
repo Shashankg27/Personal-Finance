@@ -14,6 +14,7 @@ const AddTransaction = () => {
   const [user, setUser] = useState({});
   const navigate = useNavigate();
   const [goals, setGoals] = useState([]);
+  const [loans, setLoans] = useState([]);
   useEffect(() => {
       const token = getCookie('token');
       if (token) {
@@ -30,12 +31,23 @@ const AddTransaction = () => {
         .catch((error) => {
           console.log("Error fetching goals! ", error);
         });
+      const loanResponse = axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setLoans(res.data.userLoans);
+        })
+        .catch((error) => {
+          console.log("Error fetching loans! ", error);
+        });
   }, []);
 
   const options = {
     income: user.incomeCategories,
     expense: user.expenseCategories,
-    goal: goals
+    goal: goals,
+    loan: loans
   }
         
   // console.log(user._id);
@@ -127,6 +139,7 @@ const AddTransaction = () => {
               <option value="expense">Expense</option>
               <option value="income">Income</option>
               <option value="goal">Goal</option>
+              <option value="loan">Loan</option>
             </select>
           </div>
           {/* Category */}

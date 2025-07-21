@@ -1,6 +1,5 @@
 const { Schema, model,} = require("mongoose");
 
-
 const goalSchema = new Schema({
     name:{
         type: String,

@@ -18,6 +18,7 @@ import AddIncome from './components/partials/AddIncome'
 import SetBudget from './components/partials/SetBudget'
 import AddTransaction from './components/partials/AddTransaction'
 import AddGoal from './components/partials/AddGoal'
+import AddLoan from './components/partials/AddLoan'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
       <Route path="/transactions" element={<Transactions />} />
       <Route path="/incomeBudget" element={<Income />} />
       <Route path="/loans" element={<Loan />} />
+      <Route path="/loans/addLoan" element={<AddLoan />} />
       <Route path="/goals" element={<Goals />} />
       <Route path="/reports" element={<Reports />} />
       <Route path="/categories/addCategory" element={<AddCategory />} />
