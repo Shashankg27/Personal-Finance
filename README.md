@@ -2,6 +2,19 @@
 
 This project is a personal finance management tool designed to help users track their investments, incomes, and expenses. It provides an organized way to monitor financial activities, analyze spending habits, and make informed decisions for better financial health.
 
+# To run this project add a .env file in both frotnend and backend folder:
+## Frotnend:
+```env
+VITE_BACKEND_API=http://localhost:3000
+```
+## Backend:
+```env
+MONGO_URL=mongodb://localhost:27017/mydatabase or your db url
+PORT=3000
+JWT_SECRET= your jwt secret key
+FRONTEND_URL="http://localhost:5173"
+```
+
 ## Features
 
 - Track multiple sources of income
