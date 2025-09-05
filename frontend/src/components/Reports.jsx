@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, {useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
+import axios from "axios";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -24,6 +25,36 @@ console.log(user);
 //   }, []);
 
 const Reports = () => {
+  const [downloading, setDownloading] = useState(false);
+
+  const handleGenerate = async () => {
+    try {
+      setDownloading(true);
+      const jwt = getCookie("token");
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_API}/user/report`, {
+        responseType: "blob",
+        withCredentials: true,
+        headers: {
+          Accept: "application/pdf",
+          ...(jwt ? { Authorization: `Bearer ${jwt}` } : {})
+        }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "finance-report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("Could not generate the report. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="flex">
       <div>
@@ -35,9 +66,9 @@ const Reports = () => {
           <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
             <h3 className="text-2xl font-semibold">Reports & Export</h3>
             <div className="flex items-center gap-4">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 !rounded-md !no-underline">
+              <button onClick={handleGenerate} disabled={downloading} className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white px-4 py-2 !rounded-md !no-underline">
                 <i className="fas fa-chart-bar p-1" />
-                Generate Report
+                {downloading ? "Generating..." : "Generate Report"}
               </button>
               <div className="flex items-center gap-2">
                 <span className="text-sm">{user.name}</span>

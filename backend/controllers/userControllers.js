@@ -6,6 +6,7 @@ const transactions = require("../models/Transaction");
 const goals = require("../models/Goal");
 const loans = require("../models/Loan");
 const SECRET = process.env.JWT_SECRET;
+const PDFDocument = require('pdfkit');
 
 const handleSignUp = async (req, res) => {
   console.log(req.body);
@@ -304,6 +305,131 @@ const handleDeleteLoan = async (req, res) => {
   }
 }
 
+async function handleGenerateReport(req, res) {
+  try {
+    let user = req.user;
+    if (!user && req.headers && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      try {
+        const bearerToken = req.headers.authorization.split(' ')[1];
+        user = validateToken(bearerToken);
+      } catch (e) {
+        return res.status(401).json({ message: 'Invalid auth token' });
+      }
+    }
+    if (!user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const [userTransactions, userInvestments, userLoans, userGoals, userDoc] = await Promise.all([
+      transactions.find({ userId: user._id }).lean(),
+      Investments.find({ userId: user._id }).lean(),
+      loans.find({ userId: user._id }).lean(),
+      goals.find({ userId: user._id }).lean(),
+      User.findById(user._id).lean()
+    ]);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="finance-report.pdf"');
+
+    doc.pipe(res);
+
+    const section = (title) => {
+      doc.moveDown().fontSize(16).fillColor('#111827').text(title, { underline: true });
+      doc.moveDown(0.5);
+    };
+
+    const tableRow = (cols) => {
+      const colWidths = cols.map(() => Math.floor((doc.page.width - doc.page.margins.left - doc.page.margins.right) / cols.length));
+      let x = doc.x;
+      const y = doc.y;
+      cols.forEach((text, idx) => {
+        doc.fontSize(10).fillColor('#111827').text(String(text ?? ''), x, y, { width: colWidths[idx], continued: false });
+        x += colWidths[idx];
+      });
+      doc.moveDown(0.4);
+    };
+
+    // Title
+    doc.fontSize(20).fillColor('#111827').text('Personal Finance Report', { align: 'center' });
+    doc.moveDown(0.25);
+    doc.fontSize(10).fillColor('#374151').text(`Generated for: ${userDoc?.name || user.username} • ${new Date().toLocaleString()}`, { align: 'center' });
+
+    // Categories
+    section('Categories');
+    tableRow(['Income Categories', 'Expense Categories', 'Investment Categories']);
+    const maxLen = Math.max(userDoc?.incomeCategories?.length || 0, userDoc?.expenseCategories?.length || 0, userDoc?.investmentCategories?.length || 0);
+    for (let i = 0; i < maxLen; i++) {
+      tableRow([
+        userDoc?.incomeCategories?.[i]?.name || '',
+        userDoc?.expenseCategories?.[i]?.name || '',
+        userDoc?.investmentCategories?.[i]?.name || ''
+      ]);
+    }
+
+    // Transactions
+    section('Transactions');
+    tableRow(['Date', 'Name', 'Type', 'Category', 'Amount']);
+    userTransactions.forEach((t) => {
+      tableRow([
+        new Date(t.date).toLocaleDateString(),
+        t.name,
+        t.type,
+        t.category,
+        (t.amount ?? 0).toFixed(2)
+      ]);
+    });
+
+    // Investments
+    section('Investments');
+    tableRow(['Date', 'Name', 'Category', 'Principal', 'ROI', 'Note']);
+    userInvestments.forEach((inv) => {
+      tableRow([
+        new Date(inv.date).toLocaleDateString(),
+        inv.name,
+        inv.category || '',
+        (inv.principal ?? 0).toFixed(2),
+        (inv.ROI ?? 0) + '%',
+        inv.note || ''
+      ]);
+    });
+
+    // Loans
+    section('Loans');
+    tableRow(['Start Date', 'Name', 'From', 'Principal', 'ROI', 'Tenure (mo)', 'Complete']);
+    userLoans.forEach((ln) => {
+      tableRow([
+        new Date(ln.startDate).toLocaleDateString(),
+        ln.name,
+        ln.from,
+        (ln.principal ?? 0).toFixed(2),
+        (ln.ROI ?? 0) + '%',
+        ln.timePeriod,
+        ln.complete ? 'Yes' : 'No'
+      ]);
+    });
+
+    // Goals
+    section('Goals');
+    tableRow(['Created', 'Target Date', 'Name', 'Amount', 'Complete']);
+    userGoals.forEach((g) => {
+      tableRow([
+        new Date(g.creationDate).toLocaleDateString(),
+        new Date(g.targetDate).toLocaleDateString(),
+        g.name,
+        (g.amount ?? 0).toFixed(2),
+        g.complete ? 'Yes' : 'No'
+      ]);
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Failed to generate report', error: err.message });
+  }
+}
+
 module.exports = {
   handleSignUp,
   handleSignIn,
@@ -320,5 +446,6 @@ module.exports = {
   handleDeleteGoal,
   handleDeleteLoan,
   handleAddLoan,
-  handleGetLoans
+  handleGetLoans,
+  handleGenerateReport
 };

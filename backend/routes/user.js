@@ -1,5 +1,6 @@
 const { Router } = require("express");
-const { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment, handleAddTransaction, handleDeleteTransaction, handleGetTransactions, handleAddGoal, handleGetGoals, handleDeleteGoal, handleAddLoan, handleGetLoans, handleDeleteLoan } = require("../controllers/userControllers");
+const { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment, handleAddTransaction, handleDeleteTransaction, handleGetTransactions, handleAddGoal, handleGetGoals, handleDeleteGoal, handleAddLoan, handleGetLoans, handleDeleteLoan, handleGenerateReport } = require("../controllers/userControllers");
+const { checkForAuthenticationCookie } = require('../middlewares/authentication');
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.delete('/deleteGoal',handleDeleteGoal);
 router.post('/addLoan',handleAddLoan);
 router.get('/getLoans',handleGetLoans);
 router.delete('/deleteLoan',handleDeleteLoan);
+router.get('/report', checkForAuthenticationCookie('token'), handleGenerateReport);
 
 module.exports = router;
