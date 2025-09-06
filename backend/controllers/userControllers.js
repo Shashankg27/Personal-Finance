@@ -297,15 +297,15 @@ const handleGetLoans = async (req, res) => {
 const handleUpdateUser = async (req, res) => {
   try {
     const { name, email, username, currentPassword, newPassword } = req.body;
-
+    
     // ✅ Extract and verify token
     const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "No token provided" });
-
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded._id); // ✅ Fetch user from DB
     if (!user) return res.status(404).json({ error: "User not found" });
-
+    
     // ✅ Check password if updating
     if (newPassword) {
       const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -314,14 +314,14 @@ const handleUpdateUser = async (req, res) => {
       }
       user.password = await bcrypt.hash(newPassword, 10);
     }
-
+    
     // ✅ Update fields
     user.name = name || user.name;
     user.email = email || user.email;
     user.username = username || user.username;
-
+    
     await user.save();
-
+    
     res.json({
       _id: user._id,
       name: user.name,
@@ -349,34 +349,17 @@ const handleDeleteLoan = async (req, res) => {
 // Generate finance report
 const handleGenerateReport = async (req, res) => {
   try {
-    let user = null;
-
-    // Case 1: middleware has already set req.user
-    if (req.user) {
-      user = await User.findById(req.user._id).lean();
+    // --- Auth: cookie or Bearer ---
+    const cookieToken = req.cookies?.token;
+    let user = cookieToken ? validateToken(cookieToken) : null;
+    if (!user && req.headers?.authorization?.startsWith("Bearer ")) {
+      const bearerToken = req.headers.authorization.split(" ")[1];
+      const tokenUser = validateToken(bearerToken);
+      user = await User.findById(tokenUser._id).lean();
     }
+    if (!user) return res.status(401).json({ message: "Not authenticated" });
 
-    // Case 2: fallback → extract from Bearer token
-    if (
-      !user &&
-      req.headers &&
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-    ) {
-      try {
-        const bearerToken = req.headers.authorization.split(" ")[1];
-        const tokenUser = validateToken(bearerToken);
-        user = await User.findById(tokenUser._id).lean();
-      } catch (e) {
-        return res.status(401).json({ message: "Invalid auth token" });
-      }
-    }
-
-    if (!user) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    // Fetch all user data
+    // --- Fetch data ---
     const [userTransactions, userInvestments, userLoans, userGoals] =
       await Promise.all([
         transactions.find({ userId: user._id }).lean(),
@@ -385,181 +368,217 @@ const handleGenerateReport = async (req, res) => {
         goals.find({ userId: user._id }).lean(),
       ]);
 
-    // Create PDF
-    const doc = new PDFDocument({ margin: 40, size: "A4" });
-
+    // --- PDF init (buffer pages so we can add page numbers) ---
+    const doc = new PDFDocument({ margin: 40, size: "A4", bufferPages: true });
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="finance-report.pdf"'
-    );
-
+    res.setHeader("Content-Disposition", 'attachment; filename="finance-report.pdf"');
     doc.pipe(res);
 
-    // Catch PDF errors
-    doc.on("error", (err) => {
-      console.error("PDF generation error:", err);
-      if (!res.headersSent) {
-        res
-          .status(500)
-          .json({ message: "Failed to generate report", error: err.message });
+    // --- Layout config ---
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const margin = doc.page.margins.left;
+    const usableWidth = pageWidth - margin * 2;
+    const footerHeight = 28;
+    const usableHeight = pageHeight - margin * 2 - footerHeight;
+    const cellPadding = 6;
+    const lineGap = 4;
+
+    // --- Helpers ---
+    const safe = (v) => {
+      if (v === null || v === undefined) return "";
+      if (typeof v === "number" && !Number.isFinite(v)) return "";
+      return String(v);
+    };
+
+    const ensureSpaceFor = (heightNeeded) => {
+      if (doc.y + heightNeeded > margin + usableHeight) {
+        doc.addPage();
+        doc.y = margin;
+        doc.x = margin;
       }
-    });
-
-    // Helper functions
-    const section = (title) => {
-      doc.moveDown().fontSize(16).fillColor("#111827").text(title, {
-        underline: true,
-      });
-      doc.moveDown(0.5);
     };
 
-    const tableRow = (cols) => {
-      if (!cols || cols.length === 0) return; // skip empty rows
+    // vertical-center-aware draw for a single table (headers + rows)
+    function drawTable(headers, rows, colFractions, opts = {}) {
+      const colWidths = colFractions.map((f) => f * usableWidth);
+      const allRows = [headers, ...rows];
 
-      const usableWidth =
-        doc.page.width - doc.page.margins.left - doc.page.margins.right;
+      for (let r = 0; r < allRows.length; r++) {
+        const row = allRows[r];
+        // compute per-cell heights
+        const cellHeights = row.map((cell, i) => {
+          const w = Math.max(20, Math.floor(colWidths[i] - 2 * cellPadding));
+          return Math.max(doc.heightOfString(safe(cell), { width: w }), 10);
+        });
+        const rowHeight = Math.max(...cellHeights) + 2 * cellPadding;
 
-      const colWidths = cols.map(() =>
-        Math.floor(usableWidth / cols.length)
-      );
+        ensureSpaceFor(rowHeight + 4);
 
-      let x = doc.x;
-      const y = doc.y;
+        const xStart = margin;
+        let x = xStart;
+        const y = doc.y;
 
-      cols.forEach((text, idx) => {
-        doc
-          .fontSize(10)
-          .fillColor("#111827")
-          .text(String(text ?? ""), x, y, {
-            width: colWidths[idx],
-            continued: false,
-          });
-        x += colWidths[idx];
-      });
-      doc.moveDown(0.4);
-    };
+        // header background
+        if (r === 0) {
+          doc.save();
+          doc.rect(xStart, y, usableWidth, rowHeight).fill("#f3f4f6");
+          doc.restore();
+        }
 
-    // Title
-    doc
-      .fontSize(20)
-      .fillColor("#111827")
-      .text("Personal Finance Report", { align: "center" });
-    doc.moveDown(0.25);
-    doc
-      .fontSize(10)
-      .fillColor("#374151")
-      .text(
-        `Generated for: ${user?.name || user?.username} • ${new Date().toLocaleString()}`,
-        { align: "center" }
-      );
+        // draw each cell content with vertical centering
+        for (let c = 0; c < row.length; c++) {
+          const w = colWidths[c];
+          const text = safe(row[c]);
+          const textWidth = Math.max(10, Math.floor(w - 2 * cellPadding));
+          const textHeight = doc.heightOfString(text, { width: textWidth });
+          const textY = y + cellPadding + Math.max(0, (rowHeight - 2 * cellPadding - textHeight) / 2);
 
-    // Categories
-    if (
-      user?.incomeCategories?.length ||
-      user?.expenseCategories?.length ||
-      user?.investmentCategories?.length
-    ) {
-      section("Categories");
-      tableRow([
-        "Income Categories",
-        "Expense Categories",
-        "Investment Categories",
-      ]);
+          // choose font
+          if (r === 0) {
+            doc.font("Helvetica-Bold").fontSize(10).fillColor("#111827");
+          } else {
+            doc.font("Helvetica").fontSize(9).fillColor("#111827");
+          }
 
-      const maxLen = Math.max(
-        user?.incomeCategories?.length || 0,
-        user?.expenseCategories?.length || 0,
-        user?.investmentCategories?.length || 0
-      );
+          doc.text(text, x + cellPadding, textY, { width: textWidth, lineGap: 2 });
 
+          // optional vertical separator: uncomment if you want vertical lines
+          // doc.save(); doc.moveTo(x + w, y).lineTo(x + w, y + rowHeight).lineWidth(0.4).stroke("#E5E7EB"); doc.restore();
+
+          x += w;
+        }
+
+        // bottom separator line
+        doc.save();
+        doc.moveTo(xStart, y + rowHeight - 2).lineTo(xStart + usableWidth, y + rowHeight - 2)
+          .lineWidth(0.4).strokeColor("#E5E7EB").stroke();
+        doc.restore();
+
+        // advance y
+        doc.y = y + rowHeight + 4;
+        doc.x = margin;
+      }
+    }
+
+    // --- Header / Title ---
+    doc.font("Helvetica-Bold").fontSize(20).fillColor("#111827").text("Personal Finance Report", { align: "center" });
+    doc.moveDown(0.2);
+    doc.font("Helvetica").fontSize(10).fillColor("#374151")
+      .text(`Generated for: ${safe(user.name || user.username)} • ${new Date().toLocaleString()}`, { align: "center" });
+    doc.moveDown(0.6);
+
+    // --- Categories ---
+    if ((user?.incomeCategories?.length || 0) || (user?.expenseCategories?.length || 0) || (user?.investmentCategories?.length || 0)) {
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Categories");
+      doc.moveDown(0.2);
+
+      const income = (user.incomeCategories || []).map((c) => c.name);
+      const expense = (user.expenseCategories || []).map((c) => c.name);
+      const invest = (user.investmentCategories || []).map((c) => c.name);
+      const maxLen = Math.max(income.length, expense.length, invest.length);
+
+      const rows = [];
       for (let i = 0; i < maxLen; i++) {
-        tableRow([
-          user?.incomeCategories?.[i]?.name || "",
-          user?.expenseCategories?.[i]?.name || "",
-          user?.investmentCategories?.[i]?.name || "",
-        ]);
+        rows.push([income[i] || "", expense[i] || "", invest[i] || ""]);
       }
+
+      const headers = ["Income Categories", "Expense Categories", "Investment Categories"];
+      const cols = [1 / 3, 1 / 3, 1 / 3];
+      drawTable(headers, rows, cols);
+      doc.moveDown(0.4);
     }
 
-    // Transactions
-    if (userTransactions?.length > 0) {
-      section("Transactions");
-      tableRow(["Date", "Name", "Type", "Category", "Amount"]);
-      userTransactions.forEach((t) => {
-        tableRow([
-          t.date ? new Date(t.date).toLocaleDateString() : "",
-          t.name || "",
-          t.type || "",
-          t.category || "",
-          (t.amount ?? 0).toFixed(2),
-        ]);
-      });
-    }
+    // --- Transactions ---
+    if ((userTransactions || []).length > 0) {
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Transactions");
+      doc.moveDown(0.2);
 
-    // Investments
-    if (userInvestments?.length > 0) {
-      section("Investments");
-      tableRow(["Date", "Name", "Category", "Principal", "ROI", "Note"]);
-      userInvestments.forEach((inv) => {
-        tableRow([
-          inv.date ? new Date(inv.date).toLocaleDateString() : "",
-          inv.name || "",
-          inv.category || "",
-          (inv.principal ?? 0).toFixed(2),
-          (inv.ROI ?? 0) + "%",
-          inv.note || "",
-        ]);
-      });
-    }
-
-    // Loans
-    if (userLoans?.length > 0) {
-      section("Loans");
-      tableRow([
-        "Start Date",
-        "Name",
-        "From",
-        "Principal",
-        "ROI",
-        "Tenure (mo)",
-        "Complete",
+      const headers = ["Date", "Name", "Type", "Category", "Amount"];
+      const cols = [0.16, 0.36, 0.12, 0.24, 0.12];
+      const rows = userTransactions.map((t) => [
+        t.date ? new Date(t.date).toLocaleDateString() : "",
+        t.name || "",
+        t.type || "",
+        t.category || "",
+        Number.isFinite(Number(t.amount)) ? Number(t.amount).toFixed(2) : "0.00",
       ]);
-      userLoans.forEach((ln) => {
-        tableRow([
-          ln.startDate ? new Date(ln.startDate).toLocaleDateString() : "",
-          ln.name || "",
-          ln.from || "",
-          (ln.principal ?? 0).toFixed(2),
-          (ln.ROI ?? 0) + "%",
-          ln.timePeriod ?? "",
-          ln.complete ? "Yes" : "No",
-        ]);
-      });
+      drawTable(headers, rows, cols);
+      doc.moveDown(0.4);
     }
 
-    // Goals
-    if (userGoals?.length > 0) {
-      section("Goals");
-      tableRow(["Created", "Target Date", "Name", "Amount", "Complete"]);
-      userGoals.forEach((g) => {
-        tableRow([
-          g.creationDate ? new Date(g.creationDate).toLocaleDateString() : "",
-          g.targetDate ? new Date(g.targetDate).toLocaleDateString() : "",
-          g.name || "",
-          (g.amount ?? 0).toFixed(2),
-          g.complete ? "Yes" : "No",
-        ]);
-      });
+    // --- Investments ---
+    if ((userInvestments || []).length > 0) {
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Investments");
+      doc.moveDown(0.2);
+
+      const headers = ["Date", "Name", "Category", "Principal", "ROI", "Note"];
+      const cols = [0.14, 0.28, 0.18, 0.14, 0.12, 0.14];
+      const rows = userInvestments.map((inv) => [
+        inv.date ? new Date(inv.date).toLocaleDateString() : "",
+        inv.name || "",
+        inv.category || "",
+        Number.isFinite(Number(inv.principal)) ? Number(inv.principal).toFixed(2) : "0.00",
+        Number.isFinite(Number(inv.ROI ?? inv.roi)) ? `${Number(inv.ROI ?? inv.roi)}%` : "0%",
+        inv.note || "",
+      ]);
+      drawTable(headers, rows, cols);
+      doc.moveDown(0.4);
     }
 
+    // --- Loans ---
+    if ((userLoans || []).length > 0) {
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Loans");
+      doc.moveDown(0.2);
+
+      const headers = ["Start Date", "Name", "From", "Principal", "ROI", "Tenure (mo)", "Complete"];
+      const cols = [0.14, 0.22, 0.16, 0.14, 0.12, 0.12, 0.10];
+      const rows = userLoans.map((ln) => [
+        ln.startDate ? new Date(ln.startDate).toLocaleDateString() : "",
+        ln.name || "",
+        ln.from || "",
+        Number.isFinite(Number(ln.principal)) ? Number(ln.principal).toFixed(2) : "0.00",
+        Number.isFinite(Number(ln.ROI ?? ln.roi)) ? `${Number(ln.ROI ?? ln.roi)}%` : "0%",
+        safe(ln.timePeriod),
+        ln.complete ? "Yes" : "No",
+      ]);
+      drawTable(headers, rows, cols);
+      doc.moveDown(0.4);
+    }
+
+    // --- Goals ---
+    if ((userGoals || []).length > 0) {
+      doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Goals");
+      doc.moveDown(0.2);
+
+      const headers = ["Created", "Target Date", "Name", "Amount", "Complete"];
+      const cols = [0.18, 0.20, 0.34, 0.14, 0.14];
+      const rows = userGoals.map((g) => [
+        g.creationDate ? new Date(g.creationDate).toLocaleDateString() : "",
+        g.targetDate ? new Date(g.targetDate).toLocaleDateString() : "",
+        g.name || "",
+        Number.isFinite(Number(g.amount)) ? Number(g.amount).toFixed(2) : "0.00",
+        g.complete ? "Yes" : "No",
+      ]);
+      drawTable(headers, rows, cols);
+      doc.moveDown(0.4);
+    }
+
+    // --- Page numbers: "Page X of Y" on each page ---
+    const range = doc.bufferedPageRange(); // { start: 0, count: N }
+    for (let i = 0; i < range.count; i++) {
+      doc.switchToPage(i);
+      const text = `Page ${i + 1} of ${range.count}`;
+      doc.font("Helvetica").fontSize(9).fillColor("#6b7280")
+        .text(text, margin, pageHeight - margin - 12, { width: usableWidth, align: "right" });
+    }
+
+    // finalize
     doc.end();
   } catch (err) {
-    console.error("Report generation error:", err);
+    console.error("❌ Report generation error:", err);
     if (!res.headersSent) {
-      return res
-        .status(500)
-        .json({ message: "Failed to generate report", error: err.message });
+      return res.status(500).json({ message: "Failed to generate report", error: err.message });
     }
   }
 };
