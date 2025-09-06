@@ -67,7 +67,7 @@ const GoalCard = ({ goal }) => {
         <div className="w-full h-2 bg-gray-600 rounded-full">
           <div
             className="h-full bg-blue-400 rounded-full"
-            style={{ width: `${percentage}%` }}
+            style={{ width: `${Math.min(percentage, 100)}%` }}
           ></div>
         </div>
       </div>

@@ -1,6 +1,8 @@
 const { Router } = require("express");
-const { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment, handleAddTransaction, handleDeleteTransaction, handleGetTransactions, handleAddGoal, handleGetGoals, handleDeleteGoal, handleAddLoan, handleGetLoans, handleDeleteLoan, handleGenerateReport } = require("../controllers/userControllers");
+const { handleSignUp, handleSignIn, handleAddCategory, handleAddInvestment, handleDeleteCategory, handleGetInvestments, handleDeleteInvestment, handleAddTransaction, handleDeleteTransaction, handleGetTransactions, handleAddGoal, handleGetGoals, handleDeleteGoal, handleAddLoan, handleGetLoans, handleDeleteLoan, handleGenerateReport, handleUpdateUser } = require("../controllers/userControllers");
 const { checkForAuthenticationCookie } = require('../middlewares/authentication');
+const { validateToken } = require("../services/authentication");
+const { verify } = require("jsonwebtoken");
 
 const router = Router();
 
@@ -14,12 +16,13 @@ router.delete('/deleteInvestment', handleDeleteInvestment);
 router.post('/addTransaction', handleAddTransaction);
 router.delete('/deleteTransaction', handleDeleteTransaction);
 router.get('/getTransactions', handleGetTransactions);
-router.post('/addGoal',handleAddGoal);
-router.get('/getGoals',handleGetGoals);
-router.delete('/deleteGoal',handleDeleteGoal);
-router.post('/addLoan',handleAddLoan);
-router.get('/getLoans',handleGetLoans);
-router.delete('/deleteLoan',handleDeleteLoan);
+router.post('/addGoal', handleAddGoal);
+router.get('/getGoals', handleGetGoals);
+router.delete('/deleteGoal', handleDeleteGoal);
+router.post('/addLoan', handleAddLoan);
+router.get('/getLoans', handleGetLoans);
+router.delete('/deleteLoan', handleDeleteLoan);
+router.put('/updateUser', handleUpdateUser);
 router.get('/report', checkForAuthenticationCookie('token'), handleGenerateReport);
 
 module.exports = router;

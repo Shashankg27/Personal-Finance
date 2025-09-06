@@ -7,6 +7,7 @@ const goals = require("../models/Goal");
 const loans = require("../models/Loan");
 const SECRET = process.env.JWT_SECRET;
 const PDFDocument = require('pdfkit');
+const bcrypt = require("bcrypt");
 
 const handleSignUp = async (req, res) => {
   console.log(req.body);
@@ -281,15 +282,55 @@ const handleGetLoans = async (req, res) => {
   try {
     const token = req.cookies.token;
     const user = validateToken(token);
-
+    
     const userLoans = await loans.find({ userId: user._id });
-
+    
     return res
-      .status(200)
-      .json({ success: "Loans fetched successfully", userLoans });
+    .status(200)
+    .json({ success: "Loans fetched successfully", userLoans });
   } catch (err) {
     console.log(err);
     return res.status(404).json({ message: err });
+  }
+};
+
+const handleUpdateUser = async (req, res) => {
+  try {
+    const { name, email, username, currentPassword, newPassword } = req.body;
+
+    // ✅ Extract and verify token
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "No token provided" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded._id); // ✅ Fetch user from DB
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // ✅ Check password if updating
+    if (newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+      user.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    // ✅ Update fields
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.username = username || user.username;
+
+    await user.save();
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+    });
+  } catch (err) {
+    console.error("Update User Error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -305,130 +346,223 @@ const handleDeleteLoan = async (req, res) => {
   }
 }
 
-async function handleGenerateReport(req, res) {
+// Generate finance report
+const handleGenerateReport = async (req, res) => {
   try {
-    let user = req.user;
-    if (!user && req.headers && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    let user = null;
+
+    // Case 1: middleware has already set req.user
+    if (req.user) {
+      user = await User.findById(req.user._id).lean();
+    }
+
+    // Case 2: fallback → extract from Bearer token
+    if (
+      !user &&
+      req.headers &&
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer ")
+    ) {
       try {
-        const bearerToken = req.headers.authorization.split(' ')[1];
-        user = validateToken(bearerToken);
+        const bearerToken = req.headers.authorization.split(" ")[1];
+        const tokenUser = validateToken(bearerToken);
+        user = await User.findById(tokenUser._id).lean();
       } catch (e) {
-        return res.status(401).json({ message: 'Invalid auth token' });
+        return res.status(401).json({ message: "Invalid auth token" });
       }
     }
+
     if (!user) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      return res.status(401).json({ message: "Not authenticated" });
     }
 
-    const [userTransactions, userInvestments, userLoans, userGoals, userDoc] = await Promise.all([
-      transactions.find({ userId: user._id }).lean(),
-      Investments.find({ userId: user._id }).lean(),
-      loans.find({ userId: user._id }).lean(),
-      goals.find({ userId: user._id }).lean(),
-      User.findById(user._id).lean()
-    ]);
+    // Fetch all user data
+    const [userTransactions, userInvestments, userLoans, userGoals] =
+      await Promise.all([
+        transactions.find({ userId: user._id }).lean(),
+        Investments.find({ userId: user._id }).lean(),
+        loans.find({ userId: user._id }).lean(),
+        goals.find({ userId: user._id }).lean(),
+      ]);
 
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    // Create PDF
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="finance-report.pdf"');
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="finance-report.pdf"'
+    );
 
     doc.pipe(res);
 
+    // Catch PDF errors
+    doc.on("error", (err) => {
+      console.error("PDF generation error:", err);
+      if (!res.headersSent) {
+        res
+          .status(500)
+          .json({ message: "Failed to generate report", error: err.message });
+      }
+    });
+
+    // Helper functions
     const section = (title) => {
-      doc.moveDown().fontSize(16).fillColor('#111827').text(title, { underline: true });
+      doc.moveDown().fontSize(16).fillColor("#111827").text(title, {
+        underline: true,
+      });
       doc.moveDown(0.5);
     };
 
     const tableRow = (cols) => {
-      const colWidths = cols.map(() => Math.floor((doc.page.width - doc.page.margins.left - doc.page.margins.right) / cols.length));
+      if (!cols || cols.length === 0) return; // skip empty rows
+
+      const usableWidth =
+        doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+      const colWidths = cols.map(() =>
+        Math.floor(usableWidth / cols.length)
+      );
+
       let x = doc.x;
       const y = doc.y;
+
       cols.forEach((text, idx) => {
-        doc.fontSize(10).fillColor('#111827').text(String(text ?? ''), x, y, { width: colWidths[idx], continued: false });
+        doc
+          .fontSize(10)
+          .fillColor("#111827")
+          .text(String(text ?? ""), x, y, {
+            width: colWidths[idx],
+            continued: false,
+          });
         x += colWidths[idx];
       });
       doc.moveDown(0.4);
     };
 
     // Title
-    doc.fontSize(20).fillColor('#111827').text('Personal Finance Report', { align: 'center' });
+    doc
+      .fontSize(20)
+      .fillColor("#111827")
+      .text("Personal Finance Report", { align: "center" });
     doc.moveDown(0.25);
-    doc.fontSize(10).fillColor('#374151').text(`Generated for: ${userDoc?.name || user.username} • ${new Date().toLocaleString()}`, { align: 'center' });
+    doc
+      .fontSize(10)
+      .fillColor("#374151")
+      .text(
+        `Generated for: ${user?.name || user?.username} • ${new Date().toLocaleString()}`,
+        { align: "center" }
+      );
 
     // Categories
-    section('Categories');
-    tableRow(['Income Categories', 'Expense Categories', 'Investment Categories']);
-    const maxLen = Math.max(userDoc?.incomeCategories?.length || 0, userDoc?.expenseCategories?.length || 0, userDoc?.investmentCategories?.length || 0);
-    for (let i = 0; i < maxLen; i++) {
+    if (
+      user?.incomeCategories?.length ||
+      user?.expenseCategories?.length ||
+      user?.investmentCategories?.length
+    ) {
+      section("Categories");
       tableRow([
-        userDoc?.incomeCategories?.[i]?.name || '',
-        userDoc?.expenseCategories?.[i]?.name || '',
-        userDoc?.investmentCategories?.[i]?.name || ''
+        "Income Categories",
+        "Expense Categories",
+        "Investment Categories",
       ]);
+
+      const maxLen = Math.max(
+        user?.incomeCategories?.length || 0,
+        user?.expenseCategories?.length || 0,
+        user?.investmentCategories?.length || 0
+      );
+
+      for (let i = 0; i < maxLen; i++) {
+        tableRow([
+          user?.incomeCategories?.[i]?.name || "",
+          user?.expenseCategories?.[i]?.name || "",
+          user?.investmentCategories?.[i]?.name || "",
+        ]);
+      }
     }
 
     // Transactions
-    section('Transactions');
-    tableRow(['Date', 'Name', 'Type', 'Category', 'Amount']);
-    userTransactions.forEach((t) => {
-      tableRow([
-        new Date(t.date).toLocaleDateString(),
-        t.name,
-        t.type,
-        t.category,
-        (t.amount ?? 0).toFixed(2)
-      ]);
-    });
+    if (userTransactions?.length > 0) {
+      section("Transactions");
+      tableRow(["Date", "Name", "Type", "Category", "Amount"]);
+      userTransactions.forEach((t) => {
+        tableRow([
+          t.date ? new Date(t.date).toLocaleDateString() : "",
+          t.name || "",
+          t.type || "",
+          t.category || "",
+          (t.amount ?? 0).toFixed(2),
+        ]);
+      });
+    }
 
     // Investments
-    section('Investments');
-    tableRow(['Date', 'Name', 'Category', 'Principal', 'ROI', 'Note']);
-    userInvestments.forEach((inv) => {
-      tableRow([
-        new Date(inv.date).toLocaleDateString(),
-        inv.name,
-        inv.category || '',
-        (inv.principal ?? 0).toFixed(2),
-        (inv.ROI ?? 0) + '%',
-        inv.note || ''
-      ]);
-    });
+    if (userInvestments?.length > 0) {
+      section("Investments");
+      tableRow(["Date", "Name", "Category", "Principal", "ROI", "Note"]);
+      userInvestments.forEach((inv) => {
+        tableRow([
+          inv.date ? new Date(inv.date).toLocaleDateString() : "",
+          inv.name || "",
+          inv.category || "",
+          (inv.principal ?? 0).toFixed(2),
+          (inv.ROI ?? 0) + "%",
+          inv.note || "",
+        ]);
+      });
+    }
 
     // Loans
-    section('Loans');
-    tableRow(['Start Date', 'Name', 'From', 'Principal', 'ROI', 'Tenure (mo)', 'Complete']);
-    userLoans.forEach((ln) => {
+    if (userLoans?.length > 0) {
+      section("Loans");
       tableRow([
-        new Date(ln.startDate).toLocaleDateString(),
-        ln.name,
-        ln.from,
-        (ln.principal ?? 0).toFixed(2),
-        (ln.ROI ?? 0) + '%',
-        ln.timePeriod,
-        ln.complete ? 'Yes' : 'No'
+        "Start Date",
+        "Name",
+        "From",
+        "Principal",
+        "ROI",
+        "Tenure (mo)",
+        "Complete",
       ]);
-    });
+      userLoans.forEach((ln) => {
+        tableRow([
+          ln.startDate ? new Date(ln.startDate).toLocaleDateString() : "",
+          ln.name || "",
+          ln.from || "",
+          (ln.principal ?? 0).toFixed(2),
+          (ln.ROI ?? 0) + "%",
+          ln.timePeriod ?? "",
+          ln.complete ? "Yes" : "No",
+        ]);
+      });
+    }
 
     // Goals
-    section('Goals');
-    tableRow(['Created', 'Target Date', 'Name', 'Amount', 'Complete']);
-    userGoals.forEach((g) => {
-      tableRow([
-        new Date(g.creationDate).toLocaleDateString(),
-        new Date(g.targetDate).toLocaleDateString(),
-        g.name,
-        (g.amount ?? 0).toFixed(2),
-        g.complete ? 'Yes' : 'No'
-      ]);
-    });
+    if (userGoals?.length > 0) {
+      section("Goals");
+      tableRow(["Created", "Target Date", "Name", "Amount", "Complete"]);
+      userGoals.forEach((g) => {
+        tableRow([
+          g.creationDate ? new Date(g.creationDate).toLocaleDateString() : "",
+          g.targetDate ? new Date(g.targetDate).toLocaleDateString() : "",
+          g.name || "",
+          (g.amount ?? 0).toFixed(2),
+          g.complete ? "Yes" : "No",
+        ]);
+      });
+    }
 
     doc.end();
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Failed to generate report', error: err.message });
+    console.error("Report generation error:", err);
+    if (!res.headersSent) {
+      return res
+        .status(500)
+        .json({ message: "Failed to generate report", error: err.message });
+    }
   }
-}
+};
 
 module.exports = {
   handleSignUp,
@@ -447,5 +581,6 @@ module.exports = {
   handleDeleteLoan,
   handleAddLoan,
   handleGetLoans,
-  handleGenerateReport
+  handleGenerateReport,
+  handleUpdateUser
 };

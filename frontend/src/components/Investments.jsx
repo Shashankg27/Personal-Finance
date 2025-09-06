@@ -12,30 +12,30 @@ function getCookie(name) {
 }
 
 const Investments = () => {
-    const [user, setUser] = useState({});
-    const [investments, setInvestments] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [updatedInvestments, setUpdatedInvestments] = useState([]);
+const [user, setUser] = useState({});
+const [investments, setInvestments] = useState([]);
+const [selectedCategory, setSelectedCategory] = useState('');
+const [updatedInvestments, setUpdatedInvestments] = useState([]);
 
-    useEffect(() => {
-        const token = getCookie('token');
-        if (token) {
-            const userData = jwtDecode(token);
-            setUser(userData);
+useEffect(() => {
+    const token = getCookie('token');
+    if (token) {
+        const userData = jwtDecode(token);
+        setUser(userData);
 
-            axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getInvestments`, {
-                withCredentials: true
-            })
-            .then((res) => {
-                setInvestments(res.data.investments);
-            })
-            .catch((err) => {
-                console.error('Error fetching investments:', err);
-            });
-        }
-    }, []);
+        axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getInvestments`, {
+            withCredentials: true
+        })
+        .then((res) => {
+            setInvestments(res.data.investments);
+        })
+        .catch((err) => {
+            console.error('Error fetching investments:', err);
+        });
+    }
+}, []);
 
-    useEffect(() => {
+useEffect(() => {
         const filteredInvestments = selectedCategory
             ? investments.filter(inv => inv.category === selectedCategory)
             : investments;
@@ -46,18 +46,25 @@ const Investments = () => {
             const diffInYears = (currentDate - startDate) / (1000 * 60 * 60 * 24 * 365.25);
             const diffInMonths = diffInYears * 12;
 
-            const currentValue = investment.principal * (Math.pow((1 + investment.ROI), diffInYears) || 1);
-            const monthlyReturns = (currentValue - investment.principal) / diffInMonths;
+            // ✅ Convert ROI to decimal before applying
+            const roiDecimal = investment.ROI / 100;
+
+            // Compounded annual returns (handles negative ROI properly)
+            const currentValue = investment.principal * (Math.pow((1 + roiDecimal), diffInYears) || 1);
+
+            const monthlyReturns = diffInMonths > 0
+                ? (currentValue - investment.principal) / diffInMonths
+                : 0;
 
             return {
-            ...investment,
-            current: parseFloat(currentValue.toFixed(2)),
-            monthlyReturns: parseFloat(monthlyReturns.toFixed(2)),
-            formattedDate: startDate.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            })
+                ...investment,
+                current: parseFloat(currentValue.toFixed(2)),
+                monthlyReturns: parseFloat(monthlyReturns.toFixed(2)),
+                formattedDate: startDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                })
             };
         }).sort((a, b) => b.ROI - a.ROI);
 
@@ -68,19 +75,21 @@ const Investments = () => {
     console.log(updatedInvestments);
 
     let totalInvested = 0, currentValue = 0, totalReturns = 0, monthlyReturns = 0;
-    updatedInvestments.map((investment) => (
-        totalInvested += investment.principal,
-        currentValue += investment.current,
-        monthlyReturns += investment.monthlyReturns
-    ));
-    
+    updatedInvestments.forEach((investment) => {
+        totalInvested += investment.principal;
+        currentValue += investment.current;
+        monthlyReturns += investment.monthlyReturns;
+    });
+
     monthlyReturns = monthlyReturns.toFixed(2);
     currentValue = currentValue.toFixed(2);
     totalReturns = (currentValue - totalInvested).toFixed(2);
-    const currentROI = ((totalReturns/totalInvested) *100).toFixed(2);
+    const currentROI = ((totalReturns / totalInvested) * 100).toFixed(2);
+
     console.log("user:");
     console.log(user);
     console.log(user.investmentCategories);
+
 
     if (!user) return <div className="text-white p-4">Loading...</div>;
 

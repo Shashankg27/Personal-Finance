@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import axios from "axios";
 import SideBar from "./partials/SideBar";
-import { Link } from "react-router-dom";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -9,22 +9,76 @@ function getCookie(name) {
   if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-//   const [user, setUser] = useState(null);
-let user = null;
-
-//   useEffect(() => {
-const token = getCookie("token");
-console.log(token);
-if (token) {
-  const userData = jwtDecode(token);
-  // setUser(userData);
-  console.log(userData);
-  user = userData;
-}
-console.log(user);
-//   }, []);
-
 const Settings = () => {
+  const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    username: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  useEffect(() => {
+    const token = getCookie("token");
+    if (token) {
+      const userData = jwtDecode(token);
+      setUser(userData);
+      setFormData((prev) => ({
+        ...prev,
+        name: userData?.name || "",
+        email: userData?.email || "",
+        username: userData?.username || "",
+      }));
+    }
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async () => {
+    if (
+      formData.newPassword &&
+      formData.newPassword !== formData.confirmPassword
+    ) {
+      alert("New password and confirm password do not match.");
+      return;
+    }
+
+    try {
+      const token = getCookie("token");
+      const res = await axios.put(
+        `${import.meta.env.VITE_BACKEND_API}/user/updateUser`, // adjust API endpoint
+        {
+          name: formData.name,
+          email: formData.email,
+          username: formData.username,
+          currentPassword: formData.currentPassword || undefined,
+          newPassword: formData.newPassword || undefined,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      alert("Profile updated successfully!");
+      setUser(res.data);
+      setFormData({
+        ...formData,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.error || "Failed to update profile.");
+    }
+  };
+
   return (
     <div className="flex">
       <div>
@@ -36,52 +90,46 @@ const Settings = () => {
           <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
             <h3 className="text-2xl font-semibold">Account Settings</h3>
             <div className="flex items-center gap-4">
-              <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline">
+              <button
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 !rounded-md !no-underline"
+                onClick={handleSave}
+              >
                 Save changes
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{user.name}</span>
+                <span className="text-sm">{user?.name}</span>
               </div>
             </div>
           </div>
-          <div className="flex gap-3  p-3">
-            {/* Left-column */}
+
+          <div className="flex gap-3 p-3">
+            {/* Left Column */}
             <div className="col-span-2 flex flex-col gap-6 w-[70%]">
-              {/* {Profile- info} */}
+              {/* Profile Information */}
               <div className="bg-[#1e293b] p-5 rounded-xl">
                 <h4 className="text-lg text-white font-semibold mb-4">
                   <i className="fas fa-user-circle mr-2 text-blue-500"></i>{" "}
                   Profile Information
                 </h4>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex gap-2">
-                    <button className="text-white bg-blue-600 text-sm px-3 py-1 rounded hover:bg-blue-700">
-                      <i className="fas fa-camera mr-1"></i> Change Photo
-                    </button>
-                    <button className="text-white bg-gray-700 text-sm px-3 py-1 rounded hover:bg-gray-600">
-                      Remove
-                    </button>
-                  </div>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-300 mb-1">
-                      First Name
-                    </label>
+                    <label className="block text-gray-300 mb-1">Full Name</label>
                     <input
                       className="bg-[#374151] px-3 py-2 rounded w-full"
-                      placeholder="First Name"
-                      value={user?.fname}
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Full Name"
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-300 mb-1">
-                      Last Name
-                    </label>
+                    <label className="block text-gray-300 mb-1">Username</label>
                     <input
                       className="bg-[#374151] px-3 py-2 rounded w-full"
-                      placeholder="Last Name"
-                      value={user?.lname}
+                      name="username"
+                      value={formData.username}
+                      onChange={handleChange}
+                      placeholder="Username"
                     />
                   </div>
                   <div>
@@ -90,45 +138,32 @@ const Settings = () => {
                     </label>
                     <input
                       className="bg-[#374151] px-3 py-2 rounded w-full col-span-2"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Email Address"
-                      value={user.email}
                     />
-                  </div>
-                  <div>
-                    <label className="block text-gray-300 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      className="bg-[#374151] px-3 py-2 rounded w-full"
-                      placeholder="Phone Number"
-                      value={user?.phone}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-300 mb-1">Currency</label>
-                    <select className="bg-[#374151] px-3 py-2 rounded w-full">
-                      <option value="usd">USD ($)</option>
-                      <option value="eur">EUR (€)</option>
-                      <option value="inr">INR (₹)</option>
-                    </select>
                   </div>
                 </div>
               </div>
+
               {/* Security Settings */}
               <div className="bg-[#1f2937] p-5 rounded-xl">
                 <h4 className="text-lg font-semibold mb-4">
                   <i className="fas fa-lock mr-2 text-green-500"></i> Security
                   Settings
                 </h4>
-
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-gray-300 mb-1">
                       Current Password
                     </label>
                     <input
-                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       type="password"
+                      name="currentPassword"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       placeholder="Current Password"
                     />
                   </div>
@@ -137,8 +172,11 @@ const Settings = () => {
                       New Password
                     </label>
                     <input
-                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       type="password"
+                      name="newPassword"
+                      value={formData.newPassword}
+                      onChange={handleChange}
+                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       placeholder="New Password"
                     />
                   </div>
@@ -147,68 +185,19 @@ const Settings = () => {
                       Confirm Password
                     </label>
                     <input
-                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       type="password"
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="bg-[#374151] px-3 py-2 rounded w-full"
                       placeholder="Confirm Password"
                     />
                   </div>
                 </div>
-
-                <button className="bg-blue-600 px-4 py-2 rounded text-sm hover:bg-blue-700">
-                  Update Password
-                </button>
-
-                <div className="mt-6">
-                  <p className="mb-2 font-medium">Two-Factor Authentication</p>
-                  <div className="flex justify-between items-center bg-[#374151] px-4 py-2 rounded">
-                    <span>
-                      <i className="fas fa-shield-alt mr-2"></i>SMS
-                      Authentication
-                    </span>
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        defaultChecked
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-green-500 relative transition-all">
-                        <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 peer-checked:translate-x-full transition-all"></div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* Notification Settings */}
-              <div className="bg-[#1f2937] p-5 rounded-xl">
-                <h4 className="text-lg font-semibold mb-4">
-                  <i className="fas fa-bell mr-2 text-yellow-400"></i>{" "}
-                  Notification Preferences
-                </h4>
-
-                <div className="flex justify-between items-center mb-2">
-                  <span>Budget Alerts</span>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="toggle-checkbox"
-                  />
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span>Transaction Notifications</span>
-                  <input type="checkbox" className="toggle-checkbox" />
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Goal Reminders</span>
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="toggle-checkbox"
-                  />
-                </div>
               </div>
             </div>
-            {/* Right Column */}
+
+            {/* Right Column (unchanged, kept for future use) */}
             <div className="col-span-2 flex flex-col gap-6 w-[30%]">
               {/* Account Overview */}
               <div className="bg-[#1f2937] p-4 rounded-xl">
@@ -226,6 +215,7 @@ const Settings = () => {
                   <i className="fas fa-star mr-1"></i> Upgrade Plan
                 </button>
               </div>
+
               {/* Privacy & Data */}
               <div className="bg-[#1f2937] p-4 rounded-xl">
                 <h4 className="text-md font-semibold mb-3">Privacy & Data</h4>
@@ -253,6 +243,7 @@ const Settings = () => {
                   <i className="fas fa-trash-alt mr-1"></i> Delete Account
                 </button>
               </div>
+
               {/* Support */}
               <div className="bg-[#1f2937] p-4 rounded-xl">
                 <h4 className="text-md font-semibold mb-3">Support</h4>

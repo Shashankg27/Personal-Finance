@@ -85,6 +85,7 @@ const Goals = () => {
       );
       if (idx !== -1) {
         updatedGoals[idx].done = (updatedGoals[idx].done || 0) + transaction.amount;
+        if(updatedGoals[idx].done >= updatedGoals[idx].amount) updatedGoals[idx].complete = true;
       }
     });
 
