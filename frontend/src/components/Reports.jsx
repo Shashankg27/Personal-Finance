@@ -26,38 +26,105 @@ console.log(user);
 
 const Reports = () => {
   const [downloading, setDownloading] = useState(false);
+  const [reportType, setReportType] = useState('summary');
+  const [timePeriod, setTimePeriod] = useState('current-month');
+  const [fromDate, setFromDate] = useState('2024-01-01');
+  const [toDate, setToDate] = useState('2024-12-31');
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (type = 'pdf', quickPeriod = null) => {
     try {
       setDownloading(true);
       const jwt = getCookie("token");
+      
+      // Determine the period for quick reports
+      let period = quickPeriod || timePeriod;
+      let startDate = fromDate;
+      let endDate = toDate;
+      
+      if (quickPeriod) {
+        const now = new Date();
+        switch (quickPeriod) {
+          case 'this-month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+            break;
+          case 'last-3-months':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().split('T')[0];
+            endDate = now.toISOString().split('T')[0];
+            break;
+          case 'this-year':
+            startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+            endDate = now.toISOString().split('T')[0];
+            break;
+          case 'full-account':
+            startDate = '2020-01-01';
+            endDate = now.toISOString().split('T')[0];
+            break;
+        }
+      }
+
+      const params = new URLSearchParams({
+        reportType: reportType,
+        timePeriod: period,
+        fromDate: startDate,
+        toDate: endDate
+      });
+
+      const endpoint = type === 'csv' ? '/user/report/csv' : '/user/report';
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_API}/user/report`,
+        `${import.meta.env.VITE_BACKEND_API}${endpoint}?${params}`,
         {
-          responseType: "blob",
+          responseType: type === 'csv' ? 'text' : 'blob',
           withCredentials: true,
           headers: {
-            Accept: "application/pdf",
+            Accept: type === 'csv' ? 'text/csv' : 'application/pdf',
             ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
           },
         }
       );
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: "application/pdf" })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "finance-report.pdf";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+
+      if (type === 'csv') {
+        // Handle CSV download
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `finance-report-${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Handle PDF download
+        const url = window.URL.createObjectURL(
+          new Blob([response.data], { type: "application/pdf" })
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `finance-report-${Date.now()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
     } catch (err) {
       console.error(err);
       alert("Could not generate the report. Please try again.");
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handleQuickReport = (period) => {
+    handleGenerate('pdf', period);
+  };
+
+  const handleCsvExport = () => {
+    handleGenerate('csv');
+  };
+
+  const handlePdfExport = () => {
+    handleGenerate('pdf');
   };
 
   return (
@@ -144,6 +211,8 @@ const Reports = () => {
                     <label className="block text-sm mb-2">Report Type</label>
                     <select
                       name="reportType"
+                      value={reportType}
+                      onChange={(e) => setReportType(e.target.value)}
                       className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="summary">Account Summary</option>
@@ -158,6 +227,8 @@ const Reports = () => {
                     <label className="block text-sm mb-2">Time Period</label>
                     <select
                       name="timePeriod"
+                      value={timePeriod}
+                      onChange={(e) => setTimePeriod(e.target.value)}
                       className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="current-month">Current Month</option>
@@ -176,7 +247,8 @@ const Reports = () => {
                     <input
                       type="date"
                       name="fromDate"
-                      defaultValue="2024-01-01"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
                       className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -186,7 +258,8 @@ const Reports = () => {
                     <input
                       type="date"
                       name="toDate"
-                      defaultValue="2024-12-31"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
                       className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -238,14 +311,22 @@ const Reports = () => {
 
                 {/* Export Buttons */}
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="bg-[#22c55e] hover:bg-[#16a34a] text-white px-6 py-3 rounded font-medium transition-colors flex items-center justify-center gap-2">
+                  <button 
+                    onClick={handleCsvExport}
+                    disabled={downloading}
+                    className="bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 text-white px-6 py-3 rounded font-medium transition-colors flex items-center justify-center gap-2"
+                  >
                     <i className="fas fa-file-csv"></i>
-                    Export as CSV
+                    {downloading ? "Generating..." : "Export as CSV"}
                   </button>
 
-                  <button className="bg-[#ef4444] hover:bg-[#dc2626] text-white px-6 py-3 rounded font-medium transition-colors flex items-center justify-center gap-2">
+                  <button 
+                    onClick={handlePdfExport}
+                    disabled={downloading}
+                    className="bg-[#ef4444] hover:bg-[#dc2626] disabled:opacity-60 text-white px-6 py-3 rounded font-medium transition-colors flex items-center justify-center gap-2"
+                  >
                     <i className="fas fa-file-pdf"></i>
-                    Export as PDF
+                    {downloading ? "Generating..." : "Export as PDF"}
                   </button>
                 </div>
               </div>
@@ -256,19 +337,35 @@ const Reports = () => {
               <div className="bg-[#1e293b] p-4 rounded-lg">
                 <p className="text-xl font-bold mb-4">Quick Reports</p>
                 <div className="flex flex-col gap-3">
-                  <button className="w-full bg-[#3b82f6] hover:bg[#2563eb] hover:bg-[#2563eb] text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3">
+                  <button 
+                    onClick={() => handleQuickReport('this-month')}
+                    disabled={downloading}
+                    className="w-full bg-[#3b82f6] hover:bg-[#2563eb] disabled:opacity-60 text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3"
+                  >
                     <i className="fas fa-circle-notch" aria-hidden="true"></i>
                     <span>This Month</span>
                   </button>
-                  <button className="w-full bg-[#06b6d4] hover:bg-[#0891b2] text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3">
+                  <button 
+                    onClick={() => handleQuickReport('last-3-months')}
+                    disabled={downloading}
+                    className="w-full bg-[#06b6d4] hover:bg-[#0891b2] disabled:opacity-60 text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3"
+                  >
                     <i className="fas fa-calendar-alt" aria-hidden="true"></i>
                     <span>Last 3 Months</span>
                   </button>
-                  <button className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3">
+                  <button 
+                    onClick={() => handleQuickReport('this-year')}
+                    disabled={downloading}
+                    className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:opacity-60 text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3"
+                  >
                     <i className="fas fa-circle-notch" aria-hidden="true"></i>
                     <span>This Year</span>
                   </button>
-                  <button className="w-full bg-[#f97316] hover:bg-[#ea580c] text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3">
+                  <button 
+                    onClick={() => handleQuickReport('full-account')}
+                    disabled={downloading}
+                    className="w-full bg-[#f97316] hover:bg-[#ea580c] disabled:opacity-60 text-white px-4 py-2 rounded transition-colors flex items-center justify-center gap-3"
+                  >
                     <i className="fas fa-chart-pie" aria-hidden="true"></i>
                     <span>Full Account</span>
                   </button>

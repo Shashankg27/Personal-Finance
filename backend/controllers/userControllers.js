@@ -8,6 +8,7 @@ const loans = require("../models/Loan");
 const SECRET = process.env.JWT_SECRET;
 const PDFDocument = require('pdfkit');
 const bcrypt = require("bcrypt");
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 
 const handleSignUp = async (req, res) => {
   console.log(req.body);
@@ -583,6 +584,200 @@ const handleGenerateReport = async (req, res) => {
   }
 };
 
+// Generate CSV report
+const handleGenerateCsvReport = async (req, res) => {
+  try {
+    // --- Auth: cookie or Bearer ---
+    const cookieToken = req.cookies?.token;
+    let user = cookieToken ? validateToken(cookieToken) : null;
+    if (!user && req.headers?.authorization?.startsWith("Bearer ")) {
+      const bearerToken = req.headers.authorization.split(" ")[1];
+      const tokenUser = validateToken(bearerToken);
+      user = await User.findById(tokenUser._id).lean();
+    }
+    if (!user) return res.status(401).json({ message: "Not authenticated" });
+
+    // --- Get query parameters for filtering ---
+    const { reportType = 'summary', timePeriod = 'current-month', fromDate, toDate } = req.query;
+    
+    // --- Calculate date range based on timePeriod ---
+    let startDate, endDate;
+    const now = new Date();
+    
+    switch (timePeriod) {
+      case 'current-month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case 'last-month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case 'last-3-months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        endDate = now;
+        break;
+      case 'this-year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = now;
+        break;
+      case 'custom':
+        startDate = fromDate ? new Date(fromDate) : new Date(now.getFullYear(), 0, 1);
+        endDate = toDate ? new Date(toDate) : now;
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+
+    // --- Fetch data with date filtering ---
+    const [userTransactions, userInvestments, userLoans, userGoals] = await Promise.all([
+      transactions.find({ 
+        userId: user._id,
+        date: { $gte: startDate, $lte: endDate }
+      }).lean(),
+      Investments.find({ 
+        userId: user._id,
+        date: { $gte: startDate, $lte: endDate }
+      }).lean(),
+      loans.find({ 
+        userId: user._id,
+        startDate: { $gte: startDate, $lte: endDate }
+      }).lean(),
+      goals.find({ 
+        userId: user._id,
+        creationDate: { $gte: startDate, $lte: endDate }
+      }).lean(),
+    ]);
+
+    // --- Prepare CSV data based on report type ---
+    let csvData = [];
+    let filename = '';
+
+    switch (reportType) {
+      case 'income':
+        csvData = userTransactions.filter(t => t.type === 'income').map(t => ({
+          Date: t.date ? new Date(t.date).toLocaleDateString() : '',
+          Name: t.name || '',
+          Category: t.category || '',
+          Amount: Number(t.amount || 0).toFixed(2),
+          Description: t.description || ''
+        }));
+        filename = 'income-report.csv';
+        break;
+        
+      case 'expenses':
+        csvData = userTransactions.filter(t => t.type === 'expense').map(t => ({
+          Date: t.date ? new Date(t.date).toLocaleDateString() : '',
+          Name: t.name || '',
+          Category: t.category || '',
+          Amount: Number(t.amount || 0).toFixed(2),
+          Description: t.description || ''
+        }));
+        filename = 'expenses-report.csv';
+        break;
+        
+      case 'investments':
+        csvData = userInvestments.map(inv => ({
+          Date: inv.date ? new Date(inv.date).toLocaleDateString() : '',
+          Name: inv.name || '',
+          Category: inv.category || '',
+          Principal: Number(inv.principal || 0).toFixed(2),
+          ROI: `${Number(inv.ROI || 0)}%`,
+          Note: inv.note || ''
+        }));
+        filename = 'investments-report.csv';
+        break;
+        
+      case 'goals':
+        csvData = userGoals.map(g => ({
+          Created: g.creationDate ? new Date(g.creationDate).toLocaleDateString() : '',
+          TargetDate: g.targetDate ? new Date(g.targetDate).toLocaleDateString() : '',
+          Name: g.name || '',
+          Amount: Number(g.amount || 0).toFixed(2),
+          Complete: g.complete ? 'Yes' : 'No'
+        }));
+        filename = 'goals-report.csv';
+        break;
+        
+      default: // summary
+        // Combine all data into a comprehensive report
+        const allTransactions = userTransactions.map(t => ({
+          Type: 'Transaction',
+          SubType: t.type,
+          Date: t.date ? new Date(t.date).toLocaleDateString() : '',
+          Name: t.name || '',
+          Category: t.category || '',
+          Amount: Number(t.amount || 0).toFixed(2),
+          Description: t.description || ''
+        }));
+        
+        const allInvestments = userInvestments.map(inv => ({
+          Type: 'Investment',
+          SubType: 'Investment',
+          Date: inv.date ? new Date(inv.date).toLocaleDateString() : '',
+          Name: inv.name || '',
+          Category: inv.category || '',
+          Amount: Number(inv.principal || 0).toFixed(2),
+          Description: `ROI: ${Number(inv.ROI || 0)}% - ${inv.note || ''}`
+        }));
+        
+        const allLoans = userLoans.map(ln => ({
+          Type: 'Loan',
+          SubType: 'Loan',
+          Date: ln.startDate ? new Date(ln.startDate).toLocaleDateString() : '',
+          Name: ln.name || '',
+          Category: ln.from || '',
+          Amount: Number(ln.principal || 0).toFixed(2),
+          Description: `ROI: ${Number(ln.ROI || 0)}% - Tenure: ${ln.timePeriod} months`
+        }));
+        
+        const allGoals = userGoals.map(g => ({
+          Type: 'Goal',
+          SubType: 'Goal',
+          Date: g.creationDate ? new Date(g.creationDate).toLocaleDateString() : '',
+          Name: g.name || '',
+          Category: 'Goal',
+          Amount: Number(g.amount || 0).toFixed(2),
+          Description: `Target: ${g.targetDate ? new Date(g.targetDate).toLocaleDateString() : ''} - ${g.complete ? 'Complete' : 'In Progress'}`
+        }));
+        
+        csvData = [...allTransactions, ...allInvestments, ...allLoans, ...allGoals];
+        filename = 'finance-summary-report.csv';
+    }
+
+    // --- Set response headers ---
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // --- Generate CSV content ---
+    if (csvData.length === 0) {
+      return res.send('No data found for the selected period and filters.');
+    }
+
+    // Get headers from first object
+    const headers = Object.keys(csvData[0]);
+    
+    // Create CSV content
+    let csvContent = headers.join(',') + '\n';
+    csvData.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header] || '';
+        // Escape commas and quotes in CSV
+        return `"${String(value).replace(/"/g, '""')}"`;
+      });
+      csvContent += values.join(',') + '\n';
+    });
+
+    res.send(csvContent);
+  } catch (err) {
+    console.error("❌ CSV Report generation error:", err);
+    if (!res.headersSent) {
+      return res.status(500).json({ message: "Failed to generate CSV report", error: err.message });
+    }
+  }
+};
+
 module.exports = {
   handleSignUp,
   handleSignIn,
@@ -601,5 +796,6 @@ module.exports = {
   handleAddLoan,
   handleGetLoans,
   handleGenerateReport,
+  handleGenerateCsvReport,
   handleUpdateUser
 };
