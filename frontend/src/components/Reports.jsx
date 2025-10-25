@@ -28,20 +28,25 @@ const Reports = () => {
   const [downloading, setDownloading] = useState(false);
   const [reportType, setReportType] = useState('summary');
   const [timePeriod, setTimePeriod] = useState('current-month');
-  const [fromDate, setFromDate] = useState('2024-01-01');
-  const [toDate, setToDate] = useState('2024-12-31');
+  const [fromDate, setFromDate] = useState('2020-01-01');
+  const [toDate, setToDate] = useState('2034-12-31');
 
-  const handleGenerate = async (type = 'pdf', quickPeriod = null) => {
+  const handleGenerate = async (type = 'pdf', quickPeriod = null, useFilters = false) => {
     try {
       setDownloading(true);
       const jwt = getCookie("token");
       
-      // Determine the period for quick reports
-      let period = quickPeriod || timePeriod;
-      let startDate = fromDate;
-      let endDate = toDate;
+      let period, startDate, endDate, reportTypeToUse;
       
-      if (quickPeriod) {
+      if (useFilters) {
+        // Use current filter settings
+        period = timePeriod;
+        startDate = fromDate;
+        endDate = toDate;
+        reportTypeToUse = reportType;
+      } else if (quickPeriod) {
+        // Quick report with specific period
+        period = quickPeriod;
         const now = new Date();
         switch (quickPeriod) {
           case 'this-month':
@@ -61,13 +66,29 @@ const Reports = () => {
             endDate = now.toISOString().split('T')[0];
             break;
         }
+        reportTypeToUse = 'summary'; // Quick reports are always summary
+      } else {
+        // Full report (no filters)
+        period = 'full-account';
+        startDate = '2020-01-01';
+        endDate = new Date().toISOString().split('T')[0];
+        reportTypeToUse = 'summary';
       }
 
       const params = new URLSearchParams({
-        reportType: reportType,
+        reportType: reportTypeToUse,
         timePeriod: period,
         fromDate: startDate,
         toDate: endDate
+      });
+
+      console.log('Report generation params:', {
+        type,
+        reportType: reportTypeToUse,
+        timePeriod: period,
+        fromDate: startDate,
+        toDate: endDate,
+        useFilters
       });
 
       const endpoint = type === 'csv' ? '/user/report/csv' : '/user/report';
@@ -120,11 +141,18 @@ const Reports = () => {
   };
 
   const handleCsvExport = () => {
-    handleGenerate('csv');
+    console.log('Generating filtered CSV report...');
+    handleGenerate('csv', null, true); // Use filters
   };
 
   const handlePdfExport = () => {
-    handleGenerate('pdf');
+    console.log('Generating filtered PDF report...');
+    handleGenerate('pdf', null, true); // Use filters
+  };
+
+  const handleFullReport = () => {
+    console.log('Generating full report...');
+    handleGenerate('pdf', null, false); // Full report, no filters
   };
 
   return (
@@ -139,12 +167,12 @@ const Reports = () => {
             <h3 className="text-2xl font-semibold">Reports & Export</h3>
             <div className="flex items-center gap-4">
               <button
-                onClick={handleGenerate}
+                onClick={handleFullReport}
                 disabled={downloading}
                 className="bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white px-4 py-2 !rounded-md !no-underline"
               >
                 <i className="fas fa-chart-bar p-1" />
-                {downloading ? "Generating..." : "Generate Report"}
+                {downloading ? "Generating..." : "Generate Full Report"}
               </button>
               <div className="flex items-center gap-2">
                 <span className="text-sm">{user?.name}</span>
@@ -240,30 +268,32 @@ const Reports = () => {
                   </div>
                 </div>
 
-                {/* From Date and To Date */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm mb-2">From Date</label>
-                    <input
-                      type="date"
-                      name="fromDate"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                {/* From Date and To Date - Only show when custom is selected */}
+                {timePeriod === 'custom' && (
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm mb-2">From Date</label>
+                      <input
+                        type="date"
+                        name="fromDate"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-sm mb-2">To Date</label>
-                    <input
-                      type="date"
-                      name="toDate"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div>
+                      <label className="block text-sm mb-2">To Date</label>
+                      <input
+                        type="date"
+                        name="toDate"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Categories (Optional) */}
                 <div className="mb-6">

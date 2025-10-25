@@ -360,14 +360,95 @@ const handleGenerateReport = async (req, res) => {
     }
     if (!user) return res.status(401).json({ message: "Not authenticated" });
 
-    // --- Fetch data ---
+    // --- Get query parameters for filtering ---
+    const { reportType = 'summary', timePeriod = 'current-month', fromDate, toDate } = req.query;
+    
+    // --- Calculate date range based on timePeriod ---
+    let startDate, endDate;
+    const now = new Date();
+    
+    switch (timePeriod) {
+      case 'current-month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        break;
+      case 'last-month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        break;
+      case 'last-3-months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+        endDate = now;
+        break;
+      case 'this-year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = now;
+        break;
+      case 'full-account':
+        startDate = new Date('2020-01-01');
+        endDate = now;
+        break;
+      case 'custom':
+        startDate = fromDate ? new Date(fromDate) : new Date(now.getFullYear(), 0, 1);
+        endDate = toDate ? new Date(toDate) : now;
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+
+    // --- Fetch data with date filtering ---
     const [userTransactions, userInvestments, userLoans, userGoals] =
       await Promise.all([
-        transactions.find({ userId: user._id }).lean(),
-        Investments.find({ userId: user._id }).lean(),
-        loans.find({ userId: user._id }).lean(),
-        goals.find({ userId: user._id }).lean(),
+        transactions.find({ 
+          userId: user._id,
+          date: { $gte: startDate, $lte: endDate }
+        }).lean(),
+        Investments.find({ 
+          userId: user._id,
+          date: { $gte: startDate, $lte: endDate }
+        }).lean(),
+        loans.find({ 
+          userId: user._id,
+          startDate: { $gte: startDate, $lte: endDate }
+        }).lean(),
+        goals.find({ 
+          userId: user._id,
+          creationDate: { $gte: startDate, $lte: endDate }
+        }).lean(),
       ]);
+
+    console.log('PDF Data fetched:', {
+      transactions: userTransactions.length,
+      investments: userInvestments.length,
+      loans: userLoans.length,
+      goals: userGoals.length,
+      dateRange: { startDate, endDate }
+    });
+
+    // Debug: Check ALL transactions in database (not just filtered by date)
+    const allTransactions = await transactions.find({ userId: user._id }).lean();
+    console.log('=== COMPLETE DATABASE ANALYSIS ===');
+    console.log('Total transactions in database:', allTransactions.length);
+    
+    if (allTransactions.length > 0) {
+      const allTransactionTypes = allTransactions.map(t => t.type);
+      const uniqueTypes = [...new Set(allTransactionTypes)];
+      console.log('All transaction types in database:', uniqueTypes);
+      
+      // Show count for each type
+      uniqueTypes.forEach(type => {
+        const count = allTransactions.filter(t => t.type === type).length;
+        console.log(`- ${type}: ${count} transactions`);
+      });
+      
+      // Show sample of each type
+      uniqueTypes.forEach(type => {
+        const samples = allTransactions.filter(t => t.type === type).slice(0, 2);
+        console.log(`Sample ${type} transactions:`, samples.map(t => ({ name: t.name, type: t.type, amount: t.amount, date: t.date })));
+      });
+    }
+    console.log('=== END DATABASE ANALYSIS ===');
 
     // --- PDF init (buffer pages so we can add page numbers) ---
     const doc = new PDFDocument({ margin: 40, size: "A4", bufferPages: true });
@@ -462,11 +543,69 @@ const handleGenerateReport = async (req, res) => {
       }
     }
 
+    // --- Filter data based on report type ---
+    let filteredTransactions = userTransactions;
+    let filteredInvestments = userInvestments;
+    let filteredLoans = userLoans;
+    let filteredGoals = userGoals;
+
+    console.log('Before filtering - reportType:', reportType);
+    console.log('Before filtering - transactions count:', userTransactions.length);
+
+    if (reportType !== 'summary') {
+      switch (reportType) {
+        case 'income':
+          filteredTransactions = userTransactions.filter(t => 
+            t.type === 'income' || 
+            t.type === 'Income' || 
+            t.type === 'INCOME' ||
+            t.type.toLowerCase() === 'income'
+          );
+          filteredInvestments = [];
+          filteredLoans = [];
+          filteredGoals = [];
+          console.log('Income filtering - filtered transactions count:', filteredTransactions.length);
+          break;
+        case 'expenses':
+          filteredTransactions = userTransactions.filter(t => 
+            t.type === 'expense' || 
+            t.type === 'Expense' || 
+            t.type === 'EXPENSE' ||
+            t.type.toLowerCase() === 'expense'
+          );
+          filteredInvestments = [];
+          filteredLoans = [];
+          filteredGoals = [];
+          console.log('Expense filtering - filtered transactions count:', filteredTransactions.length);
+          break;
+        case 'investments':
+          filteredTransactions = [];
+          filteredLoans = [];
+          filteredGoals = [];
+          break;
+        case 'goals':
+          filteredTransactions = [];
+          filteredInvestments = [];
+          filteredLoans = [];
+          break;
+      }
+    } else {
+      console.log('Summary report - showing all transactions:', filteredTransactions.length);
+    }
+
     // --- Header / Title ---
-    doc.font("Helvetica-Bold").fontSize(20).fillColor("#111827").text("Personal Finance Report", { align: "center" });
+    const reportTitle = reportType === 'summary' ? 'Personal Finance Report' : 
+                       reportType === 'income' ? 'Income Report' :
+                       reportType === 'expenses' ? 'Expenses Report' :
+                       reportType === 'investments' ? 'Investments Report' :
+                       reportType === 'goals' ? 'Goals Report' : 'Personal Finance Report';
+    
+    doc.font("Helvetica-Bold").fontSize(20).fillColor("#111827").text(reportTitle, { align: "center" });
     doc.moveDown(0.2);
+    
+    const dateRangeText = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
     doc.font("Helvetica").fontSize(10).fillColor("#374151")
-      .text(`Generated for: ${safe(user.name || user.username)} • ${new Date().toLocaleString()}`, { align: "center" });
+      .text(`Generated for: ${safe(user.name || user.username)} • Period: ${dateRangeText} • ${new Date().toLocaleString()}`, { align: "center" });
     doc.moveDown(0.6);
 
     // --- Categories ---
@@ -491,13 +630,13 @@ const handleGenerateReport = async (req, res) => {
     }
 
     // --- Transactions ---
-    if ((userTransactions || []).length > 0) {
+    if ((filteredTransactions || []).length > 0) {
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Transactions");
       doc.moveDown(0.2);
 
       const headers = ["Date", "Name", "Type", "Category", "Amount"];
       const cols = [0.16, 0.36, 0.12, 0.24, 0.12];
-      const rows = userTransactions.map((t) => [
+      const rows = filteredTransactions.map((t) => [
         t.date ? new Date(t.date).toLocaleDateString() : "",
         t.name || "",
         t.type || "",
@@ -509,13 +648,13 @@ const handleGenerateReport = async (req, res) => {
     }
 
     // --- Investments ---
-    if ((userInvestments || []).length > 0) {
+    if ((filteredInvestments || []).length > 0) {
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Investments");
       doc.moveDown(0.2);
 
       const headers = ["Date", "Name", "Category", "Principal", "ROI", "Note"];
       const cols = [0.14, 0.28, 0.18, 0.14, 0.12, 0.14];
-      const rows = userInvestments.map((inv) => [
+      const rows = filteredInvestments.map((inv) => [
         inv.date ? new Date(inv.date).toLocaleDateString() : "",
         inv.name || "",
         inv.category || "",
@@ -528,13 +667,13 @@ const handleGenerateReport = async (req, res) => {
     }
 
     // --- Loans ---
-    if ((userLoans || []).length > 0) {
+    if ((filteredLoans || []).length > 0) {
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Loans");
       doc.moveDown(0.2);
 
       const headers = ["Start Date", "Name", "From", "Principal", "ROI", "Tenure (mo)", "Complete"];
       const cols = [0.14, 0.22, 0.16, 0.14, 0.12, 0.12, 0.10];
-      const rows = userLoans.map((ln) => [
+      const rows = filteredLoans.map((ln) => [
         ln.startDate ? new Date(ln.startDate).toLocaleDateString() : "",
         ln.name || "",
         ln.from || "",
@@ -548,13 +687,13 @@ const handleGenerateReport = async (req, res) => {
     }
 
     // --- Goals ---
-    if ((userGoals || []).length > 0) {
+    if ((filteredGoals || []).length > 0) {
       doc.font("Helvetica-Bold").fontSize(14).fillColor("#111827").text("Goals");
       doc.moveDown(0.2);
 
       const headers = ["Created", "Target Date", "Name", "Amount", "Complete"];
       const cols = [0.18, 0.20, 0.34, 0.14, 0.14];
-      const rows = userGoals.map((g) => [
+      const rows = filteredGoals.map((g) => [
         g.creationDate ? new Date(g.creationDate).toLocaleDateString() : "",
         g.targetDate ? new Date(g.targetDate).toLocaleDateString() : "",
         g.name || "",
@@ -621,6 +760,10 @@ const handleGenerateCsvReport = async (req, res) => {
         startDate = new Date(now.getFullYear(), 0, 1);
         endDate = now;
         break;
+      case 'full-account':
+        startDate = new Date('2020-01-01');
+        endDate = now;
+        break;
       case 'custom':
         startDate = fromDate ? new Date(fromDate) : new Date(now.getFullYear(), 0, 1);
         endDate = toDate ? new Date(toDate) : now;
@@ -650,13 +793,34 @@ const handleGenerateCsvReport = async (req, res) => {
       }).lean(),
     ]);
 
+    console.log('CSV Data fetched:', {
+      transactions: userTransactions.length,
+      investments: userInvestments.length,
+      loans: userLoans.length,
+      goals: userGoals.length,
+      dateRange: { startDate, endDate }
+    });
+
+    // Debug: Check transaction types
+    if (userTransactions.length > 0) {
+      const transactionTypes = userTransactions.map(t => t.type);
+      const uniqueTypes = [...new Set(transactionTypes)];
+      console.log('CSV Transaction types found:', uniqueTypes);
+      console.log('CSV Sample transactions:', userTransactions.slice(0, 3).map(t => ({ name: t.name, type: t.type, amount: t.amount })));
+    }
+
     // --- Prepare CSV data based on report type ---
     let csvData = [];
     let filename = '';
 
     switch (reportType) {
       case 'income':
-        csvData = userTransactions.filter(t => t.type === 'income').map(t => ({
+        csvData = userTransactions.filter(t => 
+          t.type === 'income' || 
+          t.type === 'Income' || 
+          t.type === 'INCOME' ||
+          t.type.toLowerCase() === 'income'
+        ).map(t => ({
           Date: t.date ? new Date(t.date).toLocaleDateString() : '',
           Name: t.name || '',
           Category: t.category || '',
@@ -667,7 +831,12 @@ const handleGenerateCsvReport = async (req, res) => {
         break;
         
       case 'expenses':
-        csvData = userTransactions.filter(t => t.type === 'expense').map(t => ({
+        csvData = userTransactions.filter(t => 
+          t.type === 'expense' || 
+          t.type === 'Expense' || 
+          t.type === 'EXPENSE' ||
+          t.type.toLowerCase() === 'expense'
+        ).map(t => ({
           Date: t.date ? new Date(t.date).toLocaleDateString() : '',
           Name: t.name || '',
           Category: t.category || '',
@@ -683,7 +852,7 @@ const handleGenerateCsvReport = async (req, res) => {
           Name: inv.name || '',
           Category: inv.category || '',
           Principal: Number(inv.principal || 0).toFixed(2),
-          ROI: `${Number(inv.ROI || 0)}%`,
+          ROI: `${Number(inv.ROI || inv.roi || 0)}%`,
           Note: inv.note || ''
         }));
         filename = 'investments-report.csv';
@@ -719,7 +888,7 @@ const handleGenerateCsvReport = async (req, res) => {
           Name: inv.name || '',
           Category: inv.category || '',
           Amount: Number(inv.principal || 0).toFixed(2),
-          Description: `ROI: ${Number(inv.ROI || 0)}% - ${inv.note || ''}`
+          Description: `ROI: ${Number(inv.ROI || inv.roi || 0)}% - ${inv.note || ''}`
         }));
         
         const allLoans = userLoans.map(ln => ({
@@ -729,7 +898,7 @@ const handleGenerateCsvReport = async (req, res) => {
           Name: ln.name || '',
           Category: ln.from || '',
           Amount: Number(ln.principal || 0).toFixed(2),
-          Description: `ROI: ${Number(ln.ROI || 0)}% - Tenure: ${ln.timePeriod} months`
+          Description: `ROI: ${Number(ln.ROI || ln.roi || 0)}% - Tenure: ${ln.timePeriod} months`
         }));
         
         const allGoals = userGoals.map(g => ({

@@ -79,6 +79,19 @@ const AddTransaction = () => {
       alert("Select Category!");
       return;
     }
+    if (transactionData.date) {
+      const selectedDate = new Date(transactionData.date);
+      const today = new Date();
+
+      // Reset time to 00:00 for both dates so comparison ignores time zone offsets
+      selectedDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+
+      if (selectedDate > today) {
+        alert("Date cannot be in the future!");
+        return;
+      }
+    }
     
     if(transactionData.description === '') delete transactionData.description;
     if(transactionData.date === '') delete transactionData.date;
