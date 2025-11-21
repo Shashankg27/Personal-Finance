@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import SideBar from './partials/SideBar';
 import { Link } from 'react-router-dom';
 import CategoryCard from './partials/CategoryCard';
+import Logout from './partials/Logout';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -45,7 +46,7 @@ const Categories = () => {
                         alt="John Doe"
                         className="w-8 h-8 rounded-full"
                     /> */}
-                    <span className="text-sm">{user.name}</span>
+                    <Logout />
                     </div>
                 </div>
             </div>

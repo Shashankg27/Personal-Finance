@@ -16,6 +16,8 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
+import Logout from "./partials/Logout";
+import { useNavigate } from "react-router-dom";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -24,6 +26,7 @@ function getCookie(name) {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState({});
   const [transactions, setTransactions] = useState([]);
   const [goals, setGoals] = useState([]);
@@ -201,6 +204,7 @@ const Dashboard = () => {
         {/* Header */}
           <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700 text-white">
             <h3 className="text-2xl font-semibold">Dashboard</h3>
+            <Logout />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
@@ -315,7 +319,7 @@ const Dashboard = () => {
           <div className="bg-[#1e293b] rounded-xl p-4 shadow-md">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-xl font-semibold text-white">Active Goals</h4>
-              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">View All</button>
+              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium" onClick={() => navigate('/goals')}>View All</button>
             </div>
             <div className="space-y-2">
               {goals.map((goal) => {
@@ -355,7 +359,7 @@ const Dashboard = () => {
           <div className="bg-[#1e293b] rounded-xl p-4 shadow-md">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-xl font-semibold text-white">Recent Transactions</h4>
-              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">View All</button>
+              <button className="text-blue-400 hover:text-blue-300 text-sm font-medium" onClick={() => navigate('/transactions')}>View All</button>
             </div>
             <div className="space-y-2">
               {transactions

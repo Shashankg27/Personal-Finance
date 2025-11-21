@@ -4,7 +4,6 @@ const goalSchema = new Schema({
     name:{
         type: String,
         required: true,
-        unique: true
     },
     note:{
         type: String,

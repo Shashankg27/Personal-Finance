@@ -5,7 +5,6 @@ const loanSchema = new Schema({
     name:{
         type: String,
         required: true,
-        unique: true
     },
     from:{
         type: String,

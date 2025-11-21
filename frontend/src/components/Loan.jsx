@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import LoanCard from './partials/LoanCard';
+import Logout from './partials/Logout';
 
 const Loan = () => {
   function getCookie(name) {
@@ -137,7 +138,7 @@ loans.map((loan, index) => {
                 Add loan
               </Link>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{user.name}</span>
+                <Logout />
               </div>
             </div>
           </div>

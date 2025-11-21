@@ -155,13 +155,22 @@ const AddGoal = () => {
               />
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition duration-200"
-            >
-              Add Goal
-            </button>
+            {/* Buttons */}
+            <div className="flex gap-4 mt-4">
+              <button
+                type="button"
+                className="w-1/2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+                onClick={() => navigate('/goals')}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="w-1/2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Add Goal
+              </button>
+            </div>
           </form>
         </div>
       </div>

@@ -279,6 +279,7 @@ const handleAddLoan = async (req, res) => {
     return res.status(500).json({ message: err });
   }
 };
+
 const handleGetLoans = async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -313,7 +314,7 @@ const handleUpdateUser = async (req, res) => {
       if (!isMatch) {
         return res.status(400).json({ error: "Current password is incorrect" });
       }
-      user.password = await bcrypt.hash(newPassword, 10);
+      user.password = newPassword;
     }
     
     // ✅ Update fields

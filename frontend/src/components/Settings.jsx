@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import SideBar from "./partials/SideBar";
+import Logout from "./partials/Logout";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -48,9 +49,8 @@ const Settings = () => {
     }
 
     try {
-      const token = getCookie("token");
       const res = await axios.put(
-        `${import.meta.env.VITE_BACKEND_API}/user/updateUser`, // adjust API endpoint
+        `${import.meta.env.VITE_BACKEND_API}/user/updateUser`,
         {
           name: formData.name,
           email: formData.email,
@@ -58,11 +58,7 @@ const Settings = () => {
           currentPassword: formData.currentPassword || undefined,
           newPassword: formData.newPassword || undefined,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { withCredentials: true }
       );
 
       alert("Profile updated successfully!");
@@ -97,7 +93,7 @@ const Settings = () => {
                 Save changes
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{user?.name}</span>
+                <Logout />
               </div>
             </div>
           </div>
@@ -197,39 +193,8 @@ const Settings = () => {
               </div>
             </div>
 
-            {/* Right Column (unchanged, kept for future use) */}
+            {/* Right Column */}
             <div className="col-span-2 flex flex-col gap-6 w-[30%]">
-              {/* Account Overview */}
-              <div className="bg-[#1f2937] p-4 rounded-xl">
-                <h4 className="text-md font-semibold mb-4">Account Overview</h4>
-                <p className="text-sm mb-1">
-                  <strong>Member Since:</strong> Jan 2023
-                </p>
-                <p className="text-sm mb-1">
-                  <strong>Plan:</strong> Premium
-                </p>
-                <p className="text-sm mb-4">
-                  <strong>Storage Used:</strong> 2.4GB / 5GB
-                </p>
-                <button className="bg-blue-600 w-full py-2 rounded text-sm hover:bg-blue-700">
-                  <i className="fas fa-star mr-1"></i> Upgrade Plan
-                </button>
-              </div>
-
-              {/* Privacy & Data */}
-              <div className="bg-[#1f2937] p-4 rounded-xl">
-                <h4 className="text-md font-semibold mb-3">Privacy & Data</h4>
-                <button className="w-full bg-gray-700 py-2 rounded text-sm mb-2 hover:bg-gray-600">
-                  <i className="fas fa-download mr-1"></i> Download My Data
-                </button>
-                <button className="w-full bg-gray-700 py-2 rounded text-sm mb-2 hover:bg-gray-600">
-                  Privacy Policy
-                </button>
-                <button className="w-full bg-gray-700 py-2 rounded text-sm hover:bg-gray-600">
-                  Terms of Service
-                </button>
-              </div>
-
               {/* Danger Zone */}
               <div className="bg-[#271925] p-4 rounded-xl border !border-red-600">
                 <h3 className="text-md font-semibold text-red-500 mb-3">

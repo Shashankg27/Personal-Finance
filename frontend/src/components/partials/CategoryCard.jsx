@@ -41,7 +41,6 @@ const CategoryCard = ({ category }) => {
                 <p className={`m-0 font-semibold text-lg text-${category.type === 'expenseCategories'? "red-400":"green-400"}`}>{category?.current || '$0'}</p>
                 <p className='m-0 font-semibold text-md text-gray-400'>This month</p>
                 <div className='flex gap-3 p-2'>
-                    <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>
                     <i className="fa-solid fa-trash" onClick={handleDelete} style={{color: '#d10000'}}></i>
                 </div>
             </div>

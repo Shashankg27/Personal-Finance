@@ -4,7 +4,6 @@ const investmentSchema = mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true
     },
     note: {
         type: String,

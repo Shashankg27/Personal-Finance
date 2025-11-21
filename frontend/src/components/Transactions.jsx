@@ -3,6 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import Logout from "./partials/Logout";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -11,207 +12,302 @@ function getCookie(name) {
 }
 
 const Transactions = () => {
-    const [user, setUser] = useState({});
-    const [transactions, setTransactions] = useState([]);
-    const [goals, setGoals] = useState([]);
-    const [loans, setLoans] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState('');
-    const [selectedType, setSelectedType] = useState('');
-    const [updatedTransactions, setUpdatedTransactions] = useState([]);
+  const [user, setUser] = useState({});
+  const [transactions, setTransactions] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [loans, setLoans] = useState([]);
 
-    useEffect(() => {
-        const token = getCookie('token');
-        if (token) {
-            const userData = jwtDecode(token);
-            setUser(userData);
+  // FILTER STATES
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
 
-            const response = axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
-                withCredentials: true
-            })
-            .then((res) => {
-                setTransactions(res.data.userTransactions);
-            })
-            .catch((err) => {
-                console.error('Error fetching transactions:', err);
-            });
-            const goalResponse = axios
-              .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
-                withCredentials: true,
-              })
-              .then((res) => {
-                setGoals(res.data.userGoals);
-              })
-              .catch((error) => {
-                console.log("Error fetching goals! ", error);
-            });
-            const loanResponse = axios
-              .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
-                withCredentials: true,
-              })
-              .then((res) => {
-                setLoans(res.data.userLoans);
-              })
-              .catch((error) => {
-                console.log("Error fetching loans! ", error);
-            });
-        }
-    }, []);
+  // SORT STATE
+  const [sortBy, setSortBy] = useState("date");
+  const [sortOrder, setSortOrder] = useState("desc");
 
-    console.log("transactions:");
-    console.log(transactions);
+  useEffect(() => {
+    const token = getCookie("token");
+    if (token) {
+      const userData = jwtDecode(token);
+      setUser(userData);
 
-    const handleDelete = async (id) => {
-      try{
-        const response = await axios.delete(`${import.meta.env.VITE_BACKEND_API}/user/deleteTransaction`, {
-            data: {
-                id
-            },
-            withCredentials: true
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          setTransactions(res.data.userTransactions);
+          setFilteredTransactions(res.data.userTransactions);
         });
-        if(response.data.success){
-            window.location.reload();
-        }
-      }
-      catch(err){
-        alert("Cannot delete transaction!");
-        console.log("Delete transaction error:", err);
-      }
+
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
+          withCredentials: true,
+        })
+        .then((res) => setGoals(res.data.userGoals));
+
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
+          withCredentials: true,
+        })
+        .then((res) => setLoans(res.data.userLoans));
+    }
+  }, []);
+
+  // ✅ FILTER + SEARCH + SORT
+  useEffect(() => {
+    let temp = [...transactions];
+
+    if (search.trim() !== "") {
+      temp = temp.filter((t) =>
+        `${t.name} ${t.category} ${t.description}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      );
     }
 
+    if (selectedType !== "") {
+      temp = temp.filter((t) => t.type === selectedType);
+    }
+
+    if (selectedCategory !== "") {
+      temp = temp.filter((t) => t.category === selectedCategory);
+    }
+
+    const today = new Date();
+    if (selectedDate === "This Month") {
+      temp = temp.filter(
+        (t) => new Date(t.date).getMonth() === today.getMonth()
+      );
+    }
+    if (selectedDate === "Last Month") {
+      temp = temp.filter(
+        (t) => new Date(t.date).getMonth() === today.getMonth() - 1
+      );
+    }
+    if (selectedDate === "Last 3 months") {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      temp = temp.filter((t) => new Date(t.date) >= threeMonthsAgo);
+    }
+    if (selectedDate === "This Year") {
+      temp = temp.filter(
+        (t) => new Date(t.date).getFullYear() === today.getFullYear()
+      );
+    }
+
+    temp.sort((a, b) => {
+      if (sortBy === "amount") {
+        return sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount;
+      } else {
+        return sortOrder === "asc"
+          ? new Date(a.date) - new Date(b.date)
+          : new Date(b.date) - new Date(a.date);
+      }
+    });
+
+    setFilteredTransactions(temp);
+  }, [
+    search,
+    selectedCategory,
+    selectedType,
+    selectedDate,
+    sortBy,
+    sortOrder,
+    transactions,
+  ]);
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_BACKEND_API}/user/deleteTransaction`,
+        {
+          data: { id },
+          withCredentials: true,
+        }
+      );
+      if (response.data.success) {
+        setTransactions((prev) => prev.filter((t) => t._id !== id));
+      }
+    } catch (err) {
+      alert("Cannot delete transaction!");
+    }
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedCategory("");
+    setSelectedType("");
+    setSelectedDate("");
+  };
+
+  const toggleSort = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+  };
+
   return (
-    <div className="flex">
-      <div>
+    <div className="flex h-screen">
+      {/* ✅ Sidebar stays full height */}
+      <div className="h-full">
         <SideBar focus="Transactions" />
       </div>
-      <div className="flex-1">
-        <div className="bg-[#0f172a] min-h-screen text-white">
-          {/* Header */}
-          <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 mb-6 border !border-gray-700">
-            <h3 className="text-2xl font-semibold">Transactions</h3>
-            <div className="flex items-center gap-3">
-              <Link to='addTransaction' className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 !rounded-md !no-underline">
-                <i className="fa-solid fa-plus p-1" />
-                Add Transaction
-              </Link>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{user.name}</span>
-              </div>
+
+      {/* ✅ Content scrolls independently */}
+      <div className="flex-1 bg-[#0f172a] text-white h-full overflow-y-auto">
+        <div className="bg-[#1e293b] flex justify-between items-center px-4 py-3 border !border-gray-700">
+          <h3 className="text-2xl font-semibold">Transactions</h3>
+          <div className="flex items-center gap-3">
+            <Link
+              to="addTransaction"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md !no-underline"
+            >
+              <i className="fa-solid fa-plus p-1" /> Add Transaction
+            </Link>
+            <Logout />
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="p-3">
+          <div className="bg-[#1e293b] p-4 rounded-xl flex gap-4">
+
+            {/* SEARCH */}
+            <div className="flex-1">
+              <label>Search</label>
+              <input
+                type="text"
+                placeholder="Search transactions"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-3 pr-3 py-2 rounded-md bg-[#334155] text-white outline-none"
+              />
+              <p className="text-sm text-gray-400 mt-3">
+                Showing {filteredTransactions.length} transactions
+              </p>
+            </div>
+
+            {/* CATEGORY */}
+            <div className="flex flex-col w-[23%]">
+              <label>Category</label>
+              <select
+                className="bg-[#334155] text-white px-3 py-2 rounded-md"
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={selectedCategory}
+              >
+                <option value="">All Categories</option>
+                {filteredTransactions.map((t) => (
+                  <option key={t._id} value={t.category}>
+                    {t.category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* TYPE */}
+            <div className="flex flex-col w-[23%]">
+              <label>Type</label>
+              <select
+                className="bg-[#334155] text-white px-3 py-2 rounded-md"
+                onChange={(e) => setSelectedType(e.target.value)}
+                value={selectedType}
+              >
+                <option value="">All Types</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+                <option value="goal">Goal</option>
+                <option value="loan">Loan</option>
+              </select>
+            </div>
+
+            {/* DATE RANGE */}
+            <div className="flex flex-col w-[23%]">
+              <label>Date Range</label>
+              <select
+                className="bg-[#334155] text-white px-3 py-2 rounded-md"
+                onChange={(e) => setSelectedDate(e.target.value)}
+                value={selectedDate}
+              >
+                <option value="">All Time</option>
+                <option>This Month</option>
+                <option>Last Month</option>
+                <option>Last 3 months</option>
+                <option>This Year</option>
+              </select>
+
+              <button
+                className="text-blue-400 hover:underline text-sm mt-2 ml-auto"
+                onClick={clearFilters}
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
+        </div>
 
-          <div className="p-3">
-            <div className="bg-[#1e293b] p-4 rounded-xl">
-              {/* Search */}
-              <div className="flex gap-4">
+        {/* LIST */}
+        <div className="p-3">
+          <div className="bg-[#1e293b] rounded-xl">
+            <div className="flex justify-between items-center p-4">
+              <p className="font-semibold text-lg">All Transactions</p>
+              <i
+                className="fa-solid fa-sort cursor-pointer"
+                onClick={toggleSort}
+              />
+            </div>
+
+            {filteredTransactions.map((transaction) => (
+              <div
+                key={transaction._id}
+                className="border-y !border-gray-700 px-4 py-3 flex justify-between"
+              >
                 <div>
-                  <label className="block text-white mb-1">Search</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <i className="fas fa-search text-gray-400"></i>
-                    </span>
-                    <input
-                      type="text"
-                      placeholder="Search transactions"
-                      className=" pl-10 pr-3 py-2 rounded-md bg-[#334155] text-white placeholder-gray-400 outline-none"
-                    />
-                  </div>
-                  <p className="text-sm text-gray-400 mt-3">
-                    Showing {transactions.length} transactions
+                  <p className="font-semibold">{transaction.name}</p>
+                  <p className="text-gray-400 text-md">{transaction.category}</p>
+                  <p className="text-gray-400 text-md">
+                    {new Date(transaction.date).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {transaction.description}
                   </p>
                 </div>
 
-                <div className="flex flex-col w-[25%]">
-                  {/* Category */}
-                  <label className="block text-white mb-1">Category</label>
-                  <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full">
-                    <option>All Categories</option>
-                    {(selectedType === '' || selectedType === 'income') && user.incomeCategories && user.incomeCategories.map((category, index) => (
-                      <option value={category.name}>{category.name}</option>
-                    ))}
-                    {(selectedType === '' || selectedType === 'expense') && user.expenseCategories && user.expenseCategories.map((category, index) => (
-                      <option value={category.name}>{category.name}</option>
-                    ))}
-                    {(selectedType === '' || selectedType === 'goals') && goals && goals.map((goal, index) => (
-                      <option value={goal.name}>{goal.name}</option>
-                    ))}
-                    {(selectedType === '' || selectedType === 'loans') && loans && loans.map((loan, index) => (
-                      <option value={loan.name}>{loan.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col w-[25%]">
-                  {/* Type */}
-                  <label className="block text-white mb-1">Type</label>
-                  <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full"
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  >
-                    <option value=''>All Types</option>
-                    <option value='income'>Income</option>
-                    <option value='expense'>Expense</option>
-                    <option value='goals'>Goals</option>
-                    <option value='loans'>Loans</option>
-                  </select>
-                </div>
-
-                <div className="flex flex-col w-[25%]">
-                  {/*Date range */}
-                  <label className="block text-white mb-1">Date Range</label>
-                  <select className="bg-[#334155] text-white px-3 py-2 rounded-md w-full">
-                    <option>This Month</option>
-                    <option>Last Month</option>
-                    <option>Last 3 months</option>
-                    <option>This Year</option>
-                    <option>Custom range</option>
-                  </select>
-
-                  {/* Clear Filters */}
-                  <div className="ml-auto">
-                    <button className="text-blue-400 hover:underline text-sm mt-3">
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="p-3">
-            <div className="bg-[#1e293b] rounded-xl">
-              <div className="flex justify-between items-center">
+                <div className="flex gap-3 items-center">
                   <div>
-                    <p className="p-4 font-semibold text-lg">All Transactions</p>
+                    <p
+                      className={`text-${
+                        transaction.type === "expense" ||
+                        transaction.type === "goal" ||
+                        transaction.type === "loan"
+                          ? "red-500"
+                          : "green-500"
+                      }`}
+                    >
+                      {(transaction.type === "expense" ||
+                      transaction.type === "goal" ||
+                      transaction.type === "loan"
+                        ? "-"
+                        : "+") + "$" + transaction.amount}
+                    </p>
+                    <p className="text-gray-400">{transaction.type}</p>
                   </div>
-                  <div className="p-4 flex gap-3">
-                    <i className="fa-solid fa-sort" />
-                    <i className="fa-solid fa-filter" />
-                  </div>
+
+                  <i
+                    className="fa-solid fa-trash cursor-pointer"
+                    onClick={() => handleDelete(transaction._id)}
+                    style={{ color: "#d10000" }}
+                  ></i>
+                </div>
               </div>
-              <div className="flex flex-col">
-                {transactions && transactions.map((transaction, index) => (
-                  <div className="border-y !border-gray-700">
-                    <div className="px-4 py-3 flex justify-between">
-                      <div>
-                        <p className="font-semibold">{transaction.name}</p>
-                        <div className="flex gap-2 items-center">
-                          <p className="text-gray-400 text-md">{transaction.category}</p>
-                          <span className="text-gray-400 text-xl leading-none">•</span>
-                          <p className="text-gray-400 text-md">{transaction.date}</p>
-                        </div>
-                        <p className="text-sm text-gray-500">{transaction.description}</p>
-                      </div>
-                      <div className="flex gap-3 items-center">
-                        <div className="flex flex-col gap-1">
-                          <p className={`text-${transaction.type==='expense'?'red-500':'green-500'}`}>{(transaction.type==='expense' || transaction.type === 'goal' || transaction.type === 'loan')?'-':'+'}${transaction.amount}</p>
-                          <p className="text-gray-400">{transaction.type}</p>
-                        </div>
-                        <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>
-                        <i className="fa-solid fa-trash" onClick={() => handleDelete(transaction._id)} style={{color: '#d10000'}}></i>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
+
+            {filteredTransactions.length === 0 && (
+              <p className="text-center py-6 text-gray-400">
+                No transactions found
+              </p>
+            )}
           </div>
         </div>
       </div>

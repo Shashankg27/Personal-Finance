@@ -117,13 +117,22 @@ const AddCategory = () => {
               <label className="text-white">Recurring</label>
             </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition duration-200"
-            >
-              Add Category
-            </button>
+            {/* Buttons */}
+            <div className="flex gap-4 mt-4">
+              <button
+                type="button"
+                className="w-1/2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+                onClick={() => navigate('/categories')}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="w-1/2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Add Category
+              </button>
+            </div>
           </form>
         </div>
       </div>

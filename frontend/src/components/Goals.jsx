@@ -4,6 +4,7 @@ import SideBar from "./partials/SideBar";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import GoalCard from "./partials/GoalCard";
+import Logout from "./partials/Logout";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -140,7 +141,7 @@ const Goals = () => {
                 Add Goal
               </Link>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{user.name}</span>
+                <Logout />
               </div>
             </div>
           </div>

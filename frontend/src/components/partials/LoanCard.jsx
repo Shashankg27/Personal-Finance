@@ -57,8 +57,6 @@ const LoanCard = ({ loan }) => {
                     <p className={`m-0 text-lg font-semibold `}>{loan.ROI}%</p>
                 </div>
                 <div className='flex gap-3 items-center justify-center'>
-                    <i className="fa-solid fa-pen-to-square" style={{color: '#1f9eff'}}></i>
-                    <i className="fa-solid fa-credit-card" style={{color: '#4ade80'}}></i>
                     <i className="fa-solid fa-trash" onClick={handleDelete} style={{color: '#d10000'}}></i>
                 </div>
             </div>

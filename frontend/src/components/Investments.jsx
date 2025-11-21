@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from "axios";
 import InvestmentCard from './partials/InvestmentCard';
+import Logout from './partials/Logout';
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -106,7 +107,7 @@ useEffect(() => {
                             + Add Investment
                         </Link>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm">{user.name}</span>
+                            <Logout />
                         </div>
                     </div>
                 </div>

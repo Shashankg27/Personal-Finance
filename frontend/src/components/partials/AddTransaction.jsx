@@ -118,7 +118,7 @@ const AddTransaction = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Add Transaction</h2>
-          <button className="text-gray-400 hover:text-white text-xl">
+          <button className="text-gray-400 hover:text-white text-xl" onClick={() => navigate('/transactions')}>
             &times;
           </button>
         </div>
@@ -196,16 +196,17 @@ const AddTransaction = () => {
             </label>
           </div>
           {/* Buttons */}
-          <div className="flex justify-end gap-4 mt-4">
+          <div className="flex gap-4 mt-4">
             <button
               type="button"
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+              className="w-1/2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+              onClick={() => navigate('/transactions')}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              className="w-1/2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
             >
               Save Transaction
             </button>

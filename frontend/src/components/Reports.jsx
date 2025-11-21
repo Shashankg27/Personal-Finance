@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import axios from "axios";
+import Logout from "./partials/Logout";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -175,56 +176,8 @@ const Reports = () => {
                 {downloading ? "Generating..." : "Generate Full Report"}
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{user?.name}</span>
+                <Logout />
               </div>
-            </div>
-          </div>
-
-          {/* Cards section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3">
-            <div className="bg-[#1e293b] rounded-lg p-6">
-              <h4 className="text-xl text-white font-semibold flex items-center gap-4">
-                Reports Generated
-                <i className="fas fa-file-alt" style={{ color: "#5ea8ff" }} />
-              </h4>
-              <p className="text-4xl font-bold text-[#5ea8ff] mt-3">47</p>
-              <p className="text-sm text-gray-400">This year</p>
-            </div>
-
-            <div className="bg-[#1e293b] rounded-lg p-6">
-              <h4 className="text-xl text-white font-semibold flex items-center gap-4">
-                Last Export
-                <i
-                  className="fas fa-download"
-                  style={{ color: "#34d399", fontSize: 20 }}
-                />
-              </h4>
-              <p className="text-2xl font-bold text-[#34d399] mt-3">Dec 15</p>
-              <p className="text-sm text-gray-400">Monthly summary</p>
-            </div>
-
-            <div className="bg-[#1e293b] rounded-lg p-6">
-              <h4 className="text-xl text-white font-semibold flex items-center gap-4">
-                Data Size
-                <i
-                  className="fas fa-database"
-                  style={{ color: "#c084fc", fontSize: 20 }}
-                ></i>
-              </h4>
-              <p className="text-4xl font-bold text-[#c084fc] mt-4">2.4GB</p>
-              <p className="text-sm text-gray-400">Total Data</p>
-            </div>
-
-            <div className="bg-[#1e293b] rounded-lg p-6">
-              <h4 className="text-xl text-white font-semibold flex items-center gap-4">
-                Storage Used
-                <i
-                  className="fas fa-cloud"
-                  style={{ color: "#fbc400", fontSize: 20 }}
-                ></i>
-              </h4>
-              <p className="text-4xl font-bold text-[#fbc400] mt-3">68%</p>
-              <p className="text-sm text-gray-400">Of 5GB Limit</p>
             </div>
           </div>
 
@@ -294,50 +247,6 @@ const Reports = () => {
                     </div>
                   </div>
                 )}
-
-                {/* Categories (Optional) */}
-                <div className="mb-6">
-                  <label className="block text-sm mb-3">Categories (Optional)</label>
-                  <div className="flex items-center gap-8">
-                    <label className="flex items-center gap-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="income"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-500 bg-[#334155] border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Income</span>
-                    </label>
-
-                    <label className="flex items-center gap-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="expenses"
-                        defaultChecked
-                        className="w-4 h-4 text-blue-500 bg-[#334155] border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Expenses</span>
-                    </label>
-
-                    <label className="flex items-center gap-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="investments"
-                        className="w-4 h-4 text-blue-500 bg-[#334155] border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Investments</span>
-                    </label>
-
-                    <label className="flex items-center gap-4 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="goals"
-                        className="w-4 h-4 text-blue-500 bg-[#334155] border-gray-600 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Goals</span>
-                    </label>
-                  </div>
-                </div>
 
                 {/* Export Buttons */}
                 <div className="grid grid-cols-2 gap-4">
