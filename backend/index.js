@@ -21,6 +21,11 @@ app.use(checkForAuthenticationCookie("token"));
 
 const userRoute = require('./routes/user');
 app.use('/user', userRoute);
+app.get('/', async (req, res) => {
+  return res.json({
+    status: "working"
+  })
+});
 app.get('/data/user', checkForAuthenticationCookie, async (req, res) => {
   const cookieValue = req.cookies['token'];
   const userPayload = validateToken(cookieValue);
