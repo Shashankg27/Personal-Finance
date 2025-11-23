@@ -5,6 +5,7 @@ import Logout from "./partials/Logout";
 
 const Reports = () => {
   const [user, setUser] = useState(null);
+  const [downloading, setDownloading] = useState(false);
   const [reportType, setReportType] = useState('summary');
   const [timePeriod, setTimePeriod] = useState('current-month');
   const [fromDate, setFromDate] = useState('2020-01-01');
