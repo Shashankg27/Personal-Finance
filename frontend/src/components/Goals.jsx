@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import GoalCard from "./partials/GoalCard";
 import Logout from "./partials/Logout";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const Goals = () => {
   const [user, setUser] = useState({});
@@ -18,33 +11,39 @@ const Goals = () => {
   const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
-    const token = getCookie("token");
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
 
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setGoals(res.data.userGoals.map(goal => ({ ...goal, done: 0 })));
-        })
-        .catch((error) => {
-          console.log("Error fetching goals! ", error);
-        });
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
+            withCredentials: true,
+          })
+          .then((res) => {
+            setGoals(res.data.userGoals.map(goal => ({ ...goal, done: 0 })));
+          })
+          .catch((error) => {
+            console.log("Error fetching goals! ", error);
+          });
 
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setTransactions(res.data.userTransactions);
-        })
-        .catch((err) => {
-          console.error("Error fetching transactions:", err);
-        });
-    }
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+            withCredentials: true,
+          })
+          .then((res) => {
+            setTransactions(res.data.userTransactions);
+          })
+          .catch((err) => {
+            console.error("Error fetching transactions:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
   }, []);
 
   const [thisMonth, setThisMonth] = useState(0);

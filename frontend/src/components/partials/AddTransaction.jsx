@@ -1,14 +1,7 @@
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 import React from "react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const AddTransaction = () => {
   const [user, setUser] = useState({});
@@ -16,11 +9,17 @@ const AddTransaction = () => {
   const [goals, setGoals] = useState([]);
   const [loans, setLoans] = useState([]);
   useEffect(() => {
-      const token = getCookie('token');
-      if (token) {
-          const userData = jwtDecode(token);
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          const userData = res.data;
           setUser(userData);
-      }
+        })
+        .catch((err) => {
+          console.error("Error fetching user:", err);
+        });
       const goalResponse = axios
         .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
           withCredentials: true,

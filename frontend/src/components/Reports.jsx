@@ -1,41 +1,31 @@
-import React, { useState } from "react";
-import { jwtDecode } from "jwt-decode";
+import React, { useState, useEffect } from "react";
 import SideBar from "./partials/SideBar";
 import axios from "axios";
 import Logout from "./partials/Logout";
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
-
-//   const [user, setUser] = useState(null);
-let user = null;
-
-//   useEffect(() => {
-const token = getCookie("token");
-console.log(token);
-if (token) {
-  const userData = jwtDecode(token);
-  // setUser(userData);
-  console.log(userData);
-  user = userData;
-}
-console.log(user);
-//   }, []);
-
 const Reports = () => {
-  const [downloading, setDownloading] = useState(false);
+  const [user, setUser] = useState(null);
   const [reportType, setReportType] = useState('summary');
   const [timePeriod, setTimePeriod] = useState('current-month');
   const [fromDate, setFromDate] = useState('2020-01-01');
   const [toDate, setToDate] = useState('2034-12-31');
 
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
+  }, []);
+
   const handleGenerate = async (type = 'pdf', quickPeriod = null, useFilters = false) => {
     try {
       setDownloading(true);
-      const jwt = getCookie("token");
       
       let period, startDate, endDate, reportTypeToUse;
       
@@ -100,7 +90,6 @@ const Reports = () => {
           withCredentials: true,
           headers: {
             Accept: type === 'csv' ? 'text/csv' : 'application/pdf',
-            ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
           },
         }
       );

@@ -1,29 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { jwtDecode } from 'jwt-decode';
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const AddInvestment = () => {
-  //   const [user, setUser] = useState(null);
-  let user = null;
+  const [user, setUser] = useState(null);
 
-  //   useEffect(() => {
-  const token = getCookie("token");
-  console.log(token);
-  if (token) {
-    const userData = jwtDecode(token);
-    // setUser(userData);
-    // console.log(userData);
-    user = userData;
-  }
-  console.log(user);
-  //   }, []);
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
+  }, []);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -81,6 +74,9 @@ const AddInvestment = () => {
 
           <p className="text-gray-300 text-center mb-6">Add a New Investment</p>
 
+          {!user ? (
+            <div className="text-white text-center">Loading...</div>
+          ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Type Dropdown */}
             <div>
@@ -97,8 +93,8 @@ const AddInvestment = () => {
                 className="w-full px-4 py-2 bg-[#334155] text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Category</option>
-                {user.investmentCategories.map((category, index) => (
-                  <option value={category.name}>{category.name}</option>
+                {user?.investmentCategories?.map((category, index) => (
+                  <option key={index} value={category.name}>{category.name}</option>
                 ))}
               </select>
             </div>
@@ -196,6 +192,7 @@ const AddInvestment = () => {
               </button>
             </div>
           </form>
+          )}
         </div>
       </div>
     </div>

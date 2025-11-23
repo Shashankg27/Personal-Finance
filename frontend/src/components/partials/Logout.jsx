@@ -1,13 +1,6 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
 
 const Logout = () => {
   const [user, setUser] = useState(null);
@@ -15,14 +8,18 @@ const Logout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = getCookie('token');
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
-    } else {
-      navigate('/signin');
-    }
-  }, []);
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+        navigate('/signin');
+      });
+  }, [navigate]);
 
   const logout = () => {
     document.cookie =

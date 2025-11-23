@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import SideBar from "./partials/SideBar";
 import Logout from "./partials/Logout";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const Settings = () => {
   const [user, setUser] = useState(null);
@@ -22,17 +15,23 @@ const Settings = () => {
   });
 
   useEffect(() => {
-    const token = getCookie("token");
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
-      setFormData((prev) => ({
-        ...prev,
-        name: userData?.name || "",
-        email: userData?.email || "",
-        username: userData?.username || "",
-      }));
-    }
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
+        setFormData((prev) => ({
+          ...prev,
+          name: userData?.name || "",
+          email: userData?.email || "",
+          username: userData?.username || "",
+        }));
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
   }, []);
 
   const handleChange = (e) => {

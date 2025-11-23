@@ -1,23 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 const AddLoan = () => {
   const [user, setUser] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = getCookie("token");
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
-    }
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
   }, []);
   console.log(user);
   const [goalData, setGoalData] = useState({});

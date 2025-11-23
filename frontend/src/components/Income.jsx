@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import axios from "axios";
 import Logout from "./partials/Logout";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const Income = () => {
   const [user, setUser] = useState({});
@@ -16,21 +9,27 @@ const Income = () => {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    const token = getCookie("token");
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setTransactions(res.data.userTransactions);
-        })
-        .catch((err) => {
-          console.error("Error fetching transactions:", err);
-        });
-    }
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+            withCredentials: true,
+          })
+          .then((res) => {
+            setTransactions(res.data.userTransactions);
+          })
+          .catch((err) => {
+            console.error("Error fetching transactions:", err);
+          });
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
   }, []);
 
   useEffect(() => {

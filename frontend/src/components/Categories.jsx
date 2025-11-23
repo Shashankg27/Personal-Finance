@@ -1,32 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 import SideBar from './partials/SideBar';
 import { Link } from 'react-router-dom';
 import CategoryCard from './partials/CategoryCard';
 import Logout from './partials/Logout';
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
 const Categories = () => {
-//   const [user, setUser] = useState(null);
-  let user = null;
+  const [user, setUser] = useState(null);
   
-    //   useEffect(() => {
-          const token = getCookie('token');
-          console.log(token);
-          if(token){
-            const userData = jwtDecode(token);
-            // setUser(userData);
-            console.log(userData);
-            user = userData;
-          }
-          console.log(user);
-    //   }, []);
-  return (
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
+      })
+      .catch((err) => {
+        console.error('Error fetching user:', err);
+      });
+  }, []);
+    if (!user) return <div className="text-white p-4">Loading...</div>;
+
+    return (
     <div className='flex'>
       <div>
         <SideBar focus='categories'/>
@@ -57,7 +54,7 @@ const Categories = () => {
                     <p className="text-xl text-white font-semibold flex items-center gap-8">
                     Total Categories <i className="fas fa-tags" />
                     </p>
-                    <p className="text-2xl text-blue-400 font-bold mt-1">{user.incomeCategories.length + user.expenseCategories.length + user.investmentCategories.length}</p>
+                    <p className="text-2xl text-blue-400 font-bold mt-1">{user?.incomeCategories?.length + user?.expenseCategories?.length + user?.investmentCategories?.length || 0}</p>
                     <p className="text-sm text-gray-400">Active categories</p>
                 </div>
 
@@ -69,7 +66,7 @@ const Categories = () => {
                         style={{ color: "#4ade80" }}
                     />
                     </p>
-                    <p className="text-2xl font-bold text-green-400 mt-1">{user.incomeCategories.length}</p>
+                    <p className="text-2xl font-bold text-green-400 mt-1">{user?.incomeCategories?.length || 0}</p>
                     <p className="text-sm text-gray-400">Income sources</p>
                 </div>
 
@@ -81,7 +78,7 @@ const Categories = () => {
                         style={{ color: "#f87171" }}
                     />
                     </p>
-                    <p className="text-2xl font-bold text-red-400 mt-1">{user.expenseCategories.length}</p>
+                    <p className="text-2xl font-bold text-red-400 mt-1">{user?.expenseCategories?.length || 0}</p>
                     <p className="text-sm text-gray-400">Expense types</p>
                 </div>
 
@@ -90,7 +87,7 @@ const Categories = () => {
                     Investment Types
                     <i className="fas fa-chart-line text-purple-400" />
                     </p>
-                    <p className="text-2xl font-bold text-purple-400 mt-1">{user.investmentCategories.length}</p>
+                    <p className="text-2xl font-bold text-purple-400 mt-1">{user?.investmentCategories?.length || 0}</p>
                     <p className="text-sm text-gray-400">Investment categories</p>
                 </div>
             </div>
@@ -100,8 +97,8 @@ const Categories = () => {
                         <p className='text-xl font-bold'>Income Categories</p>
                         <div className='border !border-gray-700 mb-4'></div>
                         <div className='flex gap-3 flex-col'>
-                            {user.incomeCategories.map((category, index) => (
-                                <CategoryCard category={category} />
+                            {user?.incomeCategories?.map((category, index) => (
+                                <CategoryCard key={index} category={category} />
                             ))}
                         </div>
                     </div>
@@ -109,8 +106,8 @@ const Categories = () => {
                         <p className='text-xl font-bold'>Expense Categories</p>
                         <div className='border !border-gray-700 mb-4'></div>
                         <div className='flex flex-col gap-3'>
-                            {user.expenseCategories.map((category, index) => (
-                                <CategoryCard category={category} />
+                            {user?.expenseCategories?.map((category, index) => (
+                                <CategoryCard key={index} category={category} />
                             ))}
                         </div>
                     </div>

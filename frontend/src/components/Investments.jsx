@@ -1,16 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import SideBar from './partials/SideBar';
 import { Link } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import axios from "axios";
 import InvestmentCard from './partials/InvestmentCard';
 import Logout from './partials/Logout';
-
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
 
 const Investments = () => {
 const [user, setUser] = useState({});
@@ -19,9 +12,12 @@ const [selectedCategory, setSelectedCategory] = useState('');
 const [updatedInvestments, setUpdatedInvestments] = useState([]);
 
 useEffect(() => {
-    const token = getCookie('token');
-    if (token) {
-        const userData = jwtDecode(token);
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
         setUser(userData);
 
         axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getInvestments`, {
@@ -33,7 +29,10 @@ useEffect(() => {
         .catch((err) => {
             console.error('Error fetching investments:', err);
         });
-    }
+      })
+      .catch((err) => {
+        console.error('Error fetching user:', err);
+      });
 }, []);
 
 useEffect(() => {

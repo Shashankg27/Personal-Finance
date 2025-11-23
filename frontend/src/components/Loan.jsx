@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import SideBar from './partials/SideBar';
-import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import LoanCard from './partials/LoanCard';
 import Logout from './partials/Logout';
 
 const Loan = () => {
-  function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
-  }
     const [user, setUser] = useState({});
     const [loans, setLoans] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -21,11 +15,17 @@ const Loan = () => {
     let monthly = 0.00;
   
     useEffect(() => {
-      const token = getCookie("token");
-      if (token) {
-        const userData = jwtDecode(token);
-        setUser(userData);
-      }
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          const userData = res.data;
+          setUser(userData);
+        })
+        .catch((err) => {
+          console.error("Error fetching user:", err);
+        });
             axios
               .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
                 withCredentials: true,

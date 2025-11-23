@@ -1,15 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Logout from "./partials/Logout";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const Transactions = () => {
   const [user, setUser] = useState({});
@@ -29,32 +22,38 @@ const Transactions = () => {
   const [sortOrder, setSortOrder] = useState("desc");
 
   useEffect(() => {
-    const token = getCookie("token");
-    if (token) {
-      const userData = jwtDecode(token);
-      setUser(userData);
+    axios
+      .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const userData = res.data;
+        setUser(userData);
 
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setTransactions(res.data.userTransactions);
-          setFilteredTransactions(res.data.userTransactions);
-        });
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+            withCredentials: true,
+          })
+          .then((res) => {
+            setTransactions(res.data.userTransactions);
+            setFilteredTransactions(res.data.userTransactions);
+          });
 
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
-          withCredentials: true,
-        })
-        .then((res) => setGoals(res.data.userGoals));
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
+            withCredentials: true,
+          })
+          .then((res) => setGoals(res.data.userGoals));
 
-      axios
-        .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
-          withCredentials: true,
-        })
-        .then((res) => setLoans(res.data.userLoans));
-    }
+        axios
+          .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
+            withCredentials: true,
+          })
+          .then((res) => setLoans(res.data.userLoans));
+      })
+      .catch((err) => {
+        console.error("Error fetching user:", err);
+      });
   }, []);
 
   // ✅ FILTER + SEARCH + SORT

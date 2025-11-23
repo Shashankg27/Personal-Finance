@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import SideBar from "./partials/SideBar";
 import axios from "axios";
 import { FaUtensils, FaDollarSign, FaGasPump, FaFilm } from 'react-icons/fa';
@@ -18,12 +17,6 @@ import {
 } from 'recharts';
 import Logout from "./partials/Logout";
 import { useNavigate } from "react-router-dom";
-
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-}
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,12 +39,15 @@ const Dashboard = () => {
   const [timeRange, setTimeRange] = useState('daily'); // 'daily' or 'monthly'
 
   useEffect(() => {
-      const token = getCookie('token');
-      if (token) {
-          const userData = jwtDecode(token);
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_API}/data/user`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          const userData = res.data;
           setUser(userData);
 
-          const response = axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
+          axios.get(`${import.meta.env.VITE_BACKEND_API}/user/getTransactions`, {
               withCredentials: true
           })
           .then((res) => {
@@ -60,7 +56,7 @@ const Dashboard = () => {
           .catch((err) => {
               console.error('Error fetching transactions:', err);
           });
-          const goalResponse = axios
+          axios
             .get(`${import.meta.env.VITE_BACKEND_API}/user/getGoals`, {
               withCredentials: true,
             })
@@ -70,7 +66,7 @@ const Dashboard = () => {
             .catch((error) => {
               console.log("Error fetching goals! ", error);
           });
-          const loanResponse = axios
+          axios
             .get(`${import.meta.env.VITE_BACKEND_API}/user/getLoans`, {
               withCredentials: true,
             })
@@ -80,7 +76,10 @@ const Dashboard = () => {
             .catch((error) => {
               console.log("Error fetching loans! ", error);
           });
-      }
+        })
+        .catch((err) => {
+          console.error('Error fetching user:', err);
+        });
   }, []);
 
   const now = new Date();
