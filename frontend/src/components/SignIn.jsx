@@ -12,7 +12,7 @@ const SignIn = () => {
     const data = Object.fromEntries(formData.entries());
 
     try {
-      const response = await axios.post('http://localhost:3000/user/signin', data, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_API}/user/signin`, data, {
         withCredentials: true,
       });
       const result = response.data;
