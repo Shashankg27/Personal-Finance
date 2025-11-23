@@ -28,7 +28,9 @@ app.get('/', async (req, res) => {
 });
 app.get('/data/user', checkForAuthenticationCookie, async (req, res) => {
   const cookieValue = req.cookies['token'];
+  console.log(cookieValue);
   const userPayload = validateToken(cookieValue);
+  console.log(userPayload);
   return res.json(userPayload);
 });
 
