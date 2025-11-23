@@ -34,7 +34,7 @@ const handleSignIn = async (req, res) => {
     const token = await User.checkPasswordAndCreateToken(username, password);
     return res
       .cookie("token", token, {
-        httpOnly: false,
+        httpOnly: true,
         secure: true,
         sameSite: "none",
       })

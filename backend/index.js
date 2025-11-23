@@ -10,7 +10,7 @@ mongoose.connect(process.env.MONGO_URL).then(() => console.log("Connected MongoD
 const app = express();
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: `${process.env.FRONTEND_URL}`,
   credentials: true
 }));
 
