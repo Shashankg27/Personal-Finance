@@ -27,7 +27,7 @@ app.get('/', async (req, res) => {
   })
 });
 app.get('/data/user', checkForAuthenticationCookie, async (req, res) => {
-  return { name: "Shashank" };
+  return res.json({ name: "Shashank" });
 
   const cookieValue = req.cookies['token'];
   console.log(cookieValue);
