@@ -30,9 +30,9 @@ app.get('/data/user', checkForAuthenticationCookie("token"), async (req, res) =>
   // return res.json({ name: "Shashank" });
 
   const cookieValue = req.cookies['token'];
-  console.log(cookieValue);
+  // console.log(cookieValue);
   const userPayload = validateToken(cookieValue);
-  console.log(userPayload);
+  // console.log(userPayload);
   return res.json(userPayload);
 });
 

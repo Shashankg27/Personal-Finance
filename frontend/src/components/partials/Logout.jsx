@@ -27,7 +27,7 @@ const Logout = () => {
     setUser(null);
     navigate('/');
   };
-  console.log("user: ", user);
+  // console.log("user: ", user);
   return (
     <div className="relative bg-[#1e293b] text-white">
 
