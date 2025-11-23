@@ -19,7 +19,7 @@ const Logout = () => {
         console.error("Error fetching user:", err);
         navigate('/signin');
       });
-  }, [navigate]);
+  }, []);
 
   const logout = () => {
     document.cookie =
