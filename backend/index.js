@@ -26,8 +26,8 @@ app.get('/', async (req, res) => {
     status: "working"
   })
 });
-app.get('/data/user', checkForAuthenticationCookie, async (req, res) => {
-  return res.json({ name: "Shashank" });
+app.get('/data/user', checkForAuthenticationCookie("token"), async (req, res) => {
+  // return res.json({ name: "Shashank" });
 
   const cookieValue = req.cookies['token'];
   console.log(cookieValue);
